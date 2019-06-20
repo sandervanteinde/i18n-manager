@@ -1,4 +1,8 @@
 # Changelog
+## [0.2.1] - 2019-06-20
+### Bugfixes
+- Fixes tags without value to be shown and clickable in error and warning tables
+
 ## [0.2.0] - 2019-06-20
 ### Added
 - Escaping `<` and `>` in i18n values

@@ -77,6 +77,9 @@ export class ManagerView {
             .warning {
                 color: var(--vscode-editorWarning-foreground);
             }
+            .not-found {
+                font-style: italic;
+            }
         </style>`;
     }
 
@@ -85,13 +88,19 @@ export class ManagerView {
         <script>
             const vscode = acquireVsCodeApi();
             const callback = event => {
-                const { url, id, occassion } = event.target.dataset;
-                vscode.postMessage({
-                    command: 'navigateToFile',
-                    url,
-                    id,
-                    occassion
-                });
+                for(let i = 0; i < event.path.length; i++){
+                    const path = event.path[i];
+                    if(path.classList.contains('link')){
+                        const { url, id, occassion } = path.dataset;
+                        vscode.postMessage({
+                            command: 'navigateToFile',
+                            url,
+                            id,
+                            occassion
+                        });
+                        return;
+                    }
+                }
             };
             document.querySelectorAll('span.link').forEach(linkTag => {
                 linkTag.onclick = callback;
@@ -184,7 +193,7 @@ export class ManagerView {
 
     private escapeHtml(str: string | false | undefined) {
         if (!str) {
-            return '';
+            return '<span class="not-found">No value found</span>';
         }
         return str.replace(/</gi, '&lt;').replace(/>/gi, '&gt;');
     }
