@@ -1,14 +1,15 @@
 import { HTMLElement, Node } from 'node-html-parser';
 interface WalkerBaseResult {
     id: string;
+    occassion: number;
     attribute?: string;
 }
 interface WalkerSuccessResult extends WalkerBaseResult {
     value: string;
-    success: true;
+    state: 'success';
 }
 interface WalkerFailResult extends WalkerBaseResult {
-    success: false;
+    state: 'warning' | 'error';
     error: string;
     value?: string;
 }
@@ -38,6 +39,7 @@ export class Walker {
             if (match) {
                 const [, attribute] = match;
                 const id = element.attributes[key];
+                const occassion = result.filter(c => c.id === id).length;
                 let value: string;
                 if (attribute) {
                     value = element.attributes[attribute];
@@ -46,12 +48,12 @@ export class Walker {
                 }
                 if (!value || value.trim().length === 0) {
                     if (attribute) {
-                        result.push({ id, success: false, error: 'The i18n attribute was registered on a tag as attribute tag. However the matching attribute was not found!', attribute });
+                        result.push({ id, occassion, state: 'error', error: 'The i18n attribute was registered on a tag as attribute tag. However the matching attribute was not found!', attribute });
                     } else {
-                        result.push({ id, success: false, error: 'The i18n attribute was registered on an element without any inner HTML', attribute });
+                        result.push({ id, occassion, state: 'error', error: 'The i18n attribute was registered on an element without any inner HTML', attribute });
                     }
                 } else {
-                    result.push({ id: element.attributes[key], value: value.trim(), success: true, attribute });
+                    result.push({ id: element.attributes[key], occassion, value: value.trim(), state: 'success', attribute });
                 }
             }
         }

@@ -14,7 +14,7 @@ export function activate(context: ExtensionContext) {
 	// The commandId parameter must match the command field in package.json
 	let disposable = commands.registerCommand('extension.i18n-manager', () => {
 		if (!WorkspaceScanner.instance.initialized) {
-			WorkspaceScanner.instance.initialize();
+			WorkspaceScanner.instance.initialize(context);
 		}
 		if (panel) {
 			panel.reveal(ViewColumn.Active);
@@ -24,7 +24,7 @@ export function activate(context: ExtensionContext) {
 			wrapper.initialize();
 			panel.onDidDispose(e => {
 				panel = undefined;
-				if(wrapper){
+				if (wrapper) {
 					wrapper.deactivate();
 				}
 			});
@@ -36,7 +36,8 @@ export function activate(context: ExtensionContext) {
 
 // this method is called when your extension is deactivated
 export function deactivate() {
-	if(wrapper){
-		wrapper.deactivate();
+	if (panel) {
+		panel.dispose();
 	}
- }
+	WorkspaceScanner.deactivate();
+}

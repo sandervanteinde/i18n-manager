@@ -1,4 +1,10 @@
 # Changelog
+## [0.2.0] - 2019-06-20
+### Added
+- Escaping `<` and `>` in i18n values
+- Orderign table by Id name
+- Live reloading of i18n panel
+- Warnings for i18n tags with HTML elements in them
 
 ## [0.1.3] - 2019-06-20
 ### Added
