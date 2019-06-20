@@ -2,7 +2,7 @@
 	"name": "i18n-manager",
 	"displayName": "i18n-manager",
 	"description": "Manages i18n tags that are used in HTML templates",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"license": "SEE LICENSE IN LICENSE",
 	"engines": {
 		"vscode": "^1.35.0"
@@ -16,6 +16,7 @@
 	"categories": [
 		"Other"
 	],
+	"icon": "earth-globe.png",
 	"keywords": [
 		"i18n",
 		"angular",
@@ -24,6 +25,10 @@
 		"locale",
 		"localization"
 	],
+	"galleryBanner": {
+		"color": "#000000",
+		"theme": "dark"
+	},
 	"activationEvents": [
 		"onCommand:extension.i18n-manager"
 	],

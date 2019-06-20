@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.3] - 2019-06-20
+### Added
+- Gallery banner and icon information
+
 ## [0.1.2] - 2019-06-20
 ### Added
 - Bundling of extension using webpack
