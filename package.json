@@ -7,7 +7,12 @@
 	"engines": {
 		"vscode": "^1.35.0"
 	},
-	"publisher": "Sander van 't Einde",
+	"publisher": "sandervanteinde",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sandervanteinde/i18n-manager.git"
+	},
+	"homepage": "https://github.com/sandervanteinde/i18n-manager",
 	"categories": [
 		"Other"
 	],
