@@ -2,7 +2,7 @@
 	"name": "i18n-manager",
 	"displayName": "i18n-manager",
 	"description": "Manages i18n tags that are used in HTML templates",
-	"version": "0.1.0",
+	"version": "0.1.2",
 	"license": "SEE LICENSE IN LICENSE",
 	"engines": {
 		"vscode": "^1.35.0"
@@ -37,18 +37,22 @@
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "npm run compile",
-		"compile": "tsc -p ./",
-		"watch": "tsc -watch -p ./",
+		"vscode:prepublish": "webpack --mode production",
+		"compile": "webpack --mode none",
+		"watch": "webpack --mode none --watch",
 		"postinstall": "node ./node_modules/vscode/bin/install",
-		"test": "npm run compile && node ./node_modules/vscode/bin/test"
+		"test": "npm run compile && node ./node_modules/vscode/bin/test",
+		"test-compile": "tsc -p ./"
 	},
 	"devDependencies": {
+		"@types/mocha": "^2.2.42",
+		"@types/node": "^10.12.21",
+		"ts-loader": "^6.0.3",
+		"tslint": "^5.12.1",
 		"typescript": "^3.3.1",
 		"vscode": "^1.1.28",
-		"tslint": "^5.12.1",
-		"@types/node": "^10.12.21",
-		"@types/mocha": "^2.2.42"
+		"webpack": "^4.35.0",
+		"webpack-cli": "^3.3.4"
 	},
 	"dependencies": {
 		"node-html-parser": "^1.1.15",

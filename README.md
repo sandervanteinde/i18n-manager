@@ -15,14 +15,3 @@ You can access this webview by opening the command `>Open i18n manager`
 ## Release Notes
 
 Users appreciate release notes as you update your extension.
-
-# Changelog
-
-## [0.1.1] - 2019-06-20
-### Changed
-- Structure of changelog
-
-## [0.1.0] - 2019-06-20
-
-### Added
-- Initial release. Could potentially have bugs!

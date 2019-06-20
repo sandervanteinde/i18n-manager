@@ -1,9 +1,16 @@
-# Change Log
+# Changelog
 
-All notable changes to the "i18n-manager" extension will be documented in this file.
+## [0.1.2] - 2019-06-20
+### Added
+- Bundling of extension using webpack
+### Changed
+- Really change the changelog this time.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## [0.1.1] - 2019-06-20
+### Changed
+- Structure of changelog
 
-## [Unreleased]
+## [0.1.0] - 2019-06-20
 
-- Initial release
+### Added
+- Initial release. Could potentially have bugs!
