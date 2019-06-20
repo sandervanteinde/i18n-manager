@@ -3,11 +3,21 @@
 	"displayName": "i18n-manager",
 	"description": "Manages i18n tags that are used in HTML templates",
 	"version": "0.1.0",
+	"license": "SEE LICENSE IN LICENSE",
 	"engines": {
 		"vscode": "^1.35.0"
 	},
+	"publisher": "Sander van 't Einde",
 	"categories": [
 		"Other"
+	],
+	"keywords": [
+		"i18n",
+		"angular",
+		"html",
+		"internationalization",
+		"locale",
+		"localization"
 	],
 	"activationEvents": [
 		"onCommand:extension.i18n-manager"
