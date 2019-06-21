@@ -2,7 +2,10 @@ import { workspace, Uri, ExtensionContext, TextDocument } from 'vscode';
 import { parse } from 'node-html-parser';
 import { Walker, WalkerResult } from './walker';
 import { Observable, ReplaySubject, Subject, of, from, combineLatest } from 'rxjs';
-import { takeUntil, map, share } from 'rxjs/operators';
+import { takeUntil, map, share, shareReplay } from 'rxjs/operators';
+import { ErrorType } from './error-type';
+import { WarningType } from './warning-type';
+import { createUrl } from './utils';
 
 export type WalkerByIdResult = WalkerResult & {
     file: Uri;
@@ -19,11 +22,11 @@ export class WorkspaceScanner {
     }
 
 
-    private _resultsByFile$ = new ReplaySubject<ReadonlyMap<String, WalkerResult[]>>(1);
-    private _resultsById$ = new ReplaySubject<ReadonlyMap<String, WalkerByIdResult[]>>(1);
+    private _resultsByFile$ = new ReplaySubject<ReadonlyMap<string, WalkerResult[]>>(1);
+    private _resultsById$ = new ReplaySubject<ReadonlyMap<string, WalkerByIdResult[]>>(1);
 
-    private _resultsByFile: ReadonlyMap<String, WalkerResult[]> | undefined;
-    private _resultsById: ReadonlyMap<String, WalkerByIdResult[]> | undefined;
+    private _resultsByFile: ReadonlyMap<string, WalkerResult[]> | undefined;
+    private _resultsById: ReadonlyMap<string, WalkerByIdResult[]> | undefined;
 
     private _state: 'uninitialized' | 'initializing' | 'initialized' = 'uninitialized';
     private _onDestroy$ = new Subject<void>();
@@ -32,31 +35,37 @@ export class WorkspaceScanner {
     readonly resultsById$ = this._resultsById$.asObservable();
     readonly validatedResultsById$ = this._resultsById$.pipe(
         map(res => {
-            var copy = new Map<String, WalkerByIdResult[]>(res);
+            var copy = new Map<string, WalkerByIdResult[]>(res);
+            const valueByFile: { [key: string]: WalkerByIdResult } = {};
             copy.forEach((results, key) => {
                 var resultsCopy = [...results];
                 const values = resultsCopy.map(result => result.value).filter(Boolean) as string[];
                 var stripped0 = this.strippedString(values[0]);
                 if (values.length > 1 && values.some(value => this.strippedString(value) !== stripped0)) {
                     for (let i = 0; i < resultsCopy.length; i++) {
-                        resultsCopy[i] = { ...resultsCopy[i], state: 'error', error: 'There are other items registered with this ID whose value do not match!' };
+                        resultsCopy[i] = { ...resultsCopy[i], state: 'error', error: ErrorType.ConflictingValuesForId, message: 'There are other items registered with this ID whose value do not match!' };
                     }
                 }
-                for(let i = 0; i < resultsCopy.length; i++){
+                for (let i = 0; i < resultsCopy.length; i++) {
                     const result = resultsCopy[i];
-                    if(result.state !== 'success'){
+                    if (result.state !== 'success') {
                         continue;
                     }
                     const value = result.value;
-                    if(value && value.indexOf('<') !== -1){
-                        resultsCopy[i] = {...result, state: 'warning', error: 'This translation contains HTML tag. This is not recommended!'};
+                    if (value) {
+                        if (value.indexOf('<') !== -1) {
+                            resultsCopy[i] = { ...result, state: 'warning', warning: WarningType.HasHtmlTags, message: 'This translation contains HTML tag. This is not recommended!' };
+                        } else if (valueByFile[value] && valueByFile[value].id !== result.id) {
+                            resultsCopy[i] = { ...result, state: 'warning', warning: WarningType.ValueExists, message: `The translation with ID has the same value as <strong>${createUrl(valueByFile[value ], res => res.id)}</strong>` };
+                        }
                     }
+                    valueByFile[value] = result;
                 }
                 copy.set(key, resultsCopy);
             });
-            return copy as ReadonlyMap<String, WalkerByIdResult[]>;
+            return copy as ReadonlyMap<string, WalkerByIdResult[]>;
         }),
-        share(),
+        shareReplay(1),
         takeUntil(this._onDestroy$)
     );
 
@@ -80,10 +89,10 @@ export class WorkspaceScanner {
         if (!this._resultsByFile || !this._resultsById) { return console.error('[i18n-manager] We were not able to handle a saved document'); }
 
         const results = this.getI18nResultsForFile(document);
-        var newFileMap = new Map<String, WalkerResult[]>(this._resultsByFile);
+        var newFileMap = new Map<string, WalkerResult[]>(this._resultsByFile);
         newFileMap.set(document.uri.toString(), results);
 
-        const newIdMap = new Map<String, WalkerByIdResult[]>(this._resultsById);
+        const newIdMap = new Map<string, WalkerByIdResult[]>(this._resultsById);
 
         // remove old id maps
         const oldRegistry = this._resultsByFile.get(document.uri.toString());
@@ -155,8 +164,8 @@ export class WorkspaceScanner {
         this.registerEvents(context);
         this._state = 'initializing';
 
-        const resultByFileName = new Map<String, WalkerResult[]>();
-        const resultById = new Map<String, WalkerByIdResult[]>();
+        const resultByFileName = new Map<string, WalkerResult[]>();
+        const resultById = new Map<string, WalkerByIdResult[]>();
         const finalizeSubject$ = new Subject<void>();
 
         workspace.findFiles('**/*.html').then(files => {

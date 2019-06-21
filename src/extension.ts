@@ -3,6 +3,7 @@
 import { ExtensionContext, commands, window, ViewColumn, WebviewPanel } from 'vscode';
 import { WorkspaceScanner } from './workspace-scanner';
 import { ManagerView } from './manager-view';
+import { GlobalNotifications } from './global-notifications';
 let panel: WebviewPanel | undefined = undefined;
 let wrapper: ManagerView | undefined = undefined;
 // this method is called when your extension is activated
@@ -13,9 +14,6 @@ export function activate(context: ExtensionContext) {
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
 	let disposable = commands.registerCommand('extension.i18n-manager', () => {
-		if (!WorkspaceScanner.instance.initialized) {
-			WorkspaceScanner.instance.initialize(context);
-		}
 		if (panel) {
 			panel.reveal(ViewColumn.Active);
 		} else {
@@ -30,8 +28,14 @@ export function activate(context: ExtensionContext) {
 			});
 		}
 	});
+	
+	WorkspaceScanner.instance.initialize(context);
 
 	context.subscriptions.push(disposable);
+
+	GlobalNotifications.activate(context);
+
+	console.log('[i18n-manager] Started extension');
 }
 
 // this method is called when your extension is deactivated

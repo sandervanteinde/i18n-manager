@@ -1,18 +1,18 @@
-import { WebviewPanel, Uri, workspace, window } from 'vscode';
+import { WebviewPanel, Uri, workspace, window, env } from 'vscode';
 import { WorkspaceScanner, WalkerByIdResult } from './workspace-scanner';
 import { first, takeUntil } from 'rxjs/operators';
 import { Subject, combineLatest } from 'rxjs';
-import { WalkerResult } from './walker';
-import { distinct, navigateToi18nTagInFile } from './utils';
+import { WalkerResult, Walker } from './walker';
+import { distinct, navigateToi18nTagInFile, createUrl, escapeHtml } from './utils';
 
 export class ManagerView {
     private _scanner = WorkspaceScanner.instance;
     private _onDestroy$ = new Subject<void>();
     private _dirty = false;
 
-    errorResults = new Map<String, WalkerByIdResult[]>();
-    warningResults = new Map<String, WalkerByIdResult[]>();
-    successResults = new Map<String, WalkerByIdResult[]>();
+    errorResults = new Map<string, WalkerByIdResult[]>();
+    warningResults = new Map<string, WalkerByIdResult[]>();
+    successResults = new Map<string, WalkerByIdResult[]>();
 
     constructor(private _panel: WebviewPanel) {
         _panel.webview.options = {
@@ -20,9 +20,17 @@ export class ManagerView {
             enableScripts: true
         };
         _panel.webview.onDidReceiveMessage(message => {
+            switch(message.command){
+                case 'navigateToFile':
+                    const uri = Uri.parse(message.url);
+                    navigateToi18nTagInFile(uri, message.id, Number(message.occassion));
+                    break;
+                case 'copyToClipboard':
+                    env.clipboard.writeText(message.id);
+                    window.showInformationMessage(`Copied text '${message.id}' to the clipboard`);
+                    break;
+            }
             if (message.command === 'navigateToFile') {
-                const uri = Uri.parse(message.url);
-                navigateToi18nTagInFile(uri, message.id, Number(message.occassion));
             }
         });
         _panel.onDidChangeViewState(state => {
@@ -33,7 +41,7 @@ export class ManagerView {
         });
     }
 
-    private getOrUpdateById(id: String, collection: Map<String, WalkerByIdResult[]>, result: WalkerByIdResult) {
+    private getOrUpdateById(id: string, collection: Map<string, WalkerByIdResult[]>, result: WalkerByIdResult) {
         const entry = collection.get(id);
         if (entry) {
             entry.push(result);
@@ -64,10 +72,11 @@ export class ManagerView {
     private styles(): string {
         return `
         <style>
-            span.link {
+            .link, .copyable {
                 transition: 150ms;
             }
-            span.link:hover{
+
+            .link:hover, .copyable:hover {
                 cursor: pointer;
                 color: var(--vscode-editorLink-activeForeground);
             }
@@ -86,11 +95,13 @@ export class ManagerView {
     private scripts(): string {
         return `
         <script>
+            const copyable = 'copyable';
+            const link = 'link';
             const vscode = acquireVsCodeApi();
-            const callback = event => {
+            const linkCallback = event => {
                 for(let i = 0; i < event.path.length; i++){
                     const path = event.path[i];
-                    if(path.classList.contains('link')){
+                    if(path.classList.contains(link) && (!path.classList.contains(copyable) || !event.shiftKey)){
                         const { url, id, occassion } = path.dataset;
                         vscode.postMessage({
                             command: 'navigateToFile',
@@ -102,8 +113,28 @@ export class ManagerView {
                     }
                 }
             };
-            document.querySelectorAll('span.link').forEach(linkTag => {
-                linkTag.onclick = callback;
+
+            const copyableCallback = event => {
+                if(!event.shiftKey) return;
+                for(let i = 0; i < event.path.length; i++){
+                    const path = event.path[i];
+                    if(path.classList.contains('copyable')){
+                        const { id } = path.dataset;
+                        vscode.postMessage({
+                            command: 'copyToClipboard',
+                            id
+                        });
+                        return;
+                    }
+                }
+            };
+
+            document.querySelectorAll(\`.\${link}\`).forEach(linkTag => {
+                linkTag.addEventListener('click', linkCallback);
+            });
+
+            document.querySelectorAll(\`.\${copyable}\`).forEach(clickTag => {
+                clickTag.addEventListener('click', copyableCallback);
             });
         </script>`;
     }
@@ -147,6 +178,7 @@ export class ManagerView {
                     <tr>
                         <th>ID</th>
                         <th>Content</th>
+                        <th>In files</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -156,7 +188,7 @@ export class ManagerView {
             ${this.scripts()}
         `;
     }
-    private failedEntriesTable(entries: Map<String, WalkerByIdResult[]>, type: 'error' | 'warning'): string {
+    private failedEntriesTable(entries: Map<string, WalkerByIdResult[]>, type: 'error' | 'warning'): string {
         if (entries.size === 0) {
             return '';
         }
@@ -176,36 +208,42 @@ export class ManagerView {
         </table>`;
     }
 
-    private failedTableRow(id: String, results: WalkerByIdResult[], color: string) {
-        const createHref = (result: WalkerByIdResult) => `<span class="link" data-id="${result.id}" data-url="${result.file}" data-occassion="${result.occassion}">${this.escapeHtml(result.value)}</span>`;
+
+
+    private failedTableRow(id: string, results: WalkerByIdResult[], color: string) {
         return `
             <tr>
-                <td>${id}</td>
+                <td><span class="copyable" data-id="${id}">${id}</span></td>
                 <td>
-                    ${results.map(createHref).join('<br/>')}
+                    ${results.map(res => createUrl(res, res => res.value)).join('<br/>')}
                 </td>
                 <td class="${color}">
-                    ${distinct(results.map(r => r.state !== 'success' && r.error)).join('<br/>')}
+                    ${distinct(results.map(r => r.state !== 'success' && r.message)).join('<br/>')}
                 </td>
             </tr>
         `;
     }
 
-    private escapeHtml(str: string | false | undefined) {
-        if (!str) {
-            return '<span class="not-found">No value found</span>';
+    private getFileName(uri: Uri): string {
+        const regex = /[^\\/]+\.[^\\/]+$/;
+        const match = regex.exec(uri.toString());
+        if (match) {
+            return match[0];
         }
-        return str.replace(/</gi, '&lt;').replace(/>/gi, '&gt;');
+        return uri.toString();
     }
 
-    private successTableRow(id: String, results: WalkerByIdResult[]) {
+    private successTableRow(id: string, results: WalkerByIdResult[]) {
         const [first] = results;
         const result = first.value;
         return `
             <tr>
-                <td>${id}</td>
+                <td><span class="copyable" data-id="${id}">${id}</span></td>
                 <td>
-                    ${this.escapeHtml(result)}
+                    ${escapeHtml(result)}
+                </td>
+                <td>
+                    ${results.map(res => createUrl(res, res => this.getFileName(res.file))).join('<br/>')}
                 </td>
             </tr>
         `;

@@ -1,4 +1,5 @@
 import { Uri, workspace, window, Selection, Position } from 'vscode';
+import { WalkerByIdResult } from './workspace-scanner';
 
 export function distinct<T>(arr: Array<T>): Array<T> {
     return [...new Set(arr)];
@@ -25,4 +26,15 @@ export function navigateToi18nTagInFile(file: Uri, tag: string, occasion: number
             }
         });
     });
+}
+
+export function escapeHtml(str: string | false | undefined) {
+    if (!str) {
+        return '<span class="not-found">No value found</span>';
+    }
+    return str.replace(/</gi, '&lt;').replace(/>/gi, '&gt;');
+}
+
+export function createUrl(result: WalkerByIdResult, valueSelector: (res: WalkerByIdResult) => string | undefined) {
+    return `<span class="link copyable" data-id="${result.id}" data-url="${result.file}" data-occassion="${result.occassion}">${escapeHtml(valueSelector(result))}</span>`;
 }

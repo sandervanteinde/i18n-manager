@@ -2,7 +2,7 @@
 	"name": "i18n-manager",
 	"displayName": "i18n-manager",
 	"description": "Manages i18n tags that are used in HTML templates",
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"license": "SEE LICENSE IN LICENSE",
 	"engines": {
 		"vscode": "^1.35.0"
@@ -30,7 +30,8 @@
 		"theme": "dark"
 	},
 	"activationEvents": [
-		"onCommand:extension.i18n-manager"
+		"onCommand:extension.i18n-manager",
+		"onLanguage:html"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
