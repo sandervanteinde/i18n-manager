@@ -9,7 +9,6 @@ You can access this webview by opening the command `>Open i18n manager`
 
 ## Known Issues
 
-- There is no auto refresh yet when editting HTML files
 - Does not work with i18n attributes that do not have an identifier
 
 ## Attribution
