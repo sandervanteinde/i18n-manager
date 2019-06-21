@@ -1,4 +1,8 @@
 # Changelog
+## [0.2.3] - 2019-06-21
+### Added
+- Add pattern valdidation of i18n ids
+
 ## [0.2.2] - 2019-06-21
 ### Added
 - Global notifications showing amount of warnings and errors in notifications when i18n changes are made

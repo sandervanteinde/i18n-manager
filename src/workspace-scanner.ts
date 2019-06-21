@@ -6,6 +6,7 @@ import { takeUntil, map, share, shareReplay } from 'rxjs/operators';
 import { ErrorType } from './error-type';
 import { WarningType } from './warning-type';
 import { createUrl } from './utils';
+import { HtmlTagsValidator, IdMatchesPatternValidator, DuplicateValuesValidator, NonMatchingIdValidator, IdResultValidator, ResultValidatorContext, EntryResultValidator, BaseValidator } from './result-validators';
 
 export type WalkerByIdResult = WalkerResult & {
     file: Uri;
@@ -33,36 +34,52 @@ export class WorkspaceScanner {
 
     readonly resultsByFile$ = this._resultsByFile$.asObservable();
     readonly resultsById$ = this._resultsById$.asObservable();
+
+    private readonly resultValidators: ReadonlyArray<IdResultValidator> = [
+        new NonMatchingIdValidator()
+    ];
+
+    private readonly entryValidators: ReadonlyArray<EntryResultValidator> = [
+        new HtmlTagsValidator(),
+        new DuplicateValuesValidator(),
+        new IdMatchesPatternValidator()
+    ];
+
+    private readonly validators: ReadonlyArray<BaseValidator> = [...this.resultValidators, ...this.entryValidators];
+
     readonly validatedResultsById$ = this._resultsById$.pipe(
         map(res => {
+            for (const validator of this.validators) {
+                if (validator.initialize) {
+                    validator.initialize();
+                }
+            }
             var copy = new Map<string, WalkerByIdResult[]>(res);
-            const valueByFile: { [key: string]: WalkerByIdResult } = {};
             copy.forEach((results, key) => {
                 var resultsCopy = [...results];
-                const values = resultsCopy.map(result => result.value).filter(Boolean) as string[];
-                var stripped0 = this.strippedString(values[0]);
-                if (values.length > 1 && values.some(value => this.strippedString(value) !== stripped0)) {
-                    for (let i = 0; i < resultsCopy.length; i++) {
-                        resultsCopy[i] = { ...resultsCopy[i], state: 'error', error: ErrorType.ConflictingValuesForId, message: 'There are other items registered with this ID whose value do not match!' };
-                    }
+                var ctx = new ResultValidatorContext(key, resultsCopy);
+                for (let resultValidator of this.resultValidators) {
+                    resultValidator.validate(ctx);
                 }
-                for (let i = 0; i < resultsCopy.length; i++) {
-                    const result = resultsCopy[i];
-                    if (result.state !== 'success') {
-                        continue;
-                    }
-                    const value = result.value;
-                    if (value) {
-                        if (value.indexOf('<') !== -1) {
-                            resultsCopy[i] = { ...result, state: 'warning', warning: WarningType.HasHtmlTags, message: 'This translation contains HTML tag. This is not recommended!' };
-                        } else if (valueByFile[value] && valueByFile[value].id !== result.id) {
-                            resultsCopy[i] = { ...result, state: 'warning', warning: WarningType.ValueExists, message: `The translation with ID has the same value as <strong>${createUrl(valueByFile[value ], res => res.id)}</strong>` };
+                resultsCopy.forEach((res, index) => {
+                    for (let resultValidator of this.entryValidators) {
+                        if (res.state !== 'success') {
+                            return;
+                        }
+                        const replace = resultValidator.validate(res, ctx);
+                        if (replace !== res) {
+                            resultsCopy[index] = replace;
                         }
                     }
-                    valueByFile[value] = result;
-                }
+                });
                 copy.set(key, resultsCopy);
             });
+
+            for (const validator of this.validators) {
+                if (validator.cleanup) {
+                    validator.cleanup();
+                }
+            }
             return copy as ReadonlyMap<string, WalkerByIdResult[]>;
         }),
         shareReplay(1),
@@ -74,13 +91,6 @@ export class WorkspaceScanner {
     private constructor() {
         this.resultsByFile$.pipe(takeUntil(this._onDestroy$)).subscribe(res => this._resultsByFile = res);
         this.resultsById$.pipe(takeUntil(this._onDestroy$)).subscribe(res => this._resultsById = res);
-    }
-
-    private strippedString(str: string): string {
-        if (!str) {
-            return str;
-        }
-        return str.replace(/[\n\r]/gi, '').replace(/{{[^}]+}}/gi, '{}').replace(/ +/g, ' ');
     }
 
     private onDocumentSave(document: TextDocument): void {

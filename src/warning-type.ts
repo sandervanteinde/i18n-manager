@@ -1,4 +1,5 @@
 export enum WarningType {
     ValueExists,
-    HasHtmlTags
+    HasHtmlTags,
+    NotMatchingPattern
 }
