@@ -1,4 +1,4 @@
-import { Uri, workspace, window, Selection, Position } from 'vscode';
+import { Uri, workspace, window, Selection, Position, Range, TextEditorRevealType } from 'vscode';
 import { WalkerByIdResult } from './workspace-scanner';
 
 export function distinct<T>(arr: Array<T>): Array<T> {
@@ -10,17 +10,20 @@ export function distinct<T>(arr: Array<T>): Array<T> {
  * @param tag The tag to find
  * @param occasion The 0-indexed occasion within the file
  */
-export function navigateToi18nTagInFile(file: Uri, tag: string, occasion: number = 0){
+export function navigateToi18nTagInFile(file: Uri, tag: string, occasion: number = 0) {
     workspace.openTextDocument(file).then(doc => {
         window.showTextDocument(doc).then(editor => {
-            for(let i = 0; i < doc.lineCount; i++){
+            for (let i = 0; i < doc.lineCount; i++) {
                 const line = doc.lineAt(i);
-                if(line.isEmptyOrWhitespace){
+                if (line.isEmptyOrWhitespace) {
                     continue;
                 }
                 const tagIndex = line.text.indexOf(tag);
-                if(tagIndex !== -1 && (occasion--) === 0){
-                    editor.selection = new Selection(new Position(i, tagIndex), new Position(i, tagIndex + tag.length));
+                if (tagIndex !== -1 && (occasion--) === 0) {
+                    const start = new Position(i, tagIndex);
+                    const end = new Position(i, tagIndex + tag.length);
+                    editor.selection = new Selection(start, end);
+                    editor.revealRange(new Range(start, end), TextEditorRevealType.InCenterIfOutsideViewport);
                     return;
                 }
             }

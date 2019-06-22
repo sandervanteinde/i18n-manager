@@ -20,7 +20,7 @@ export class ManagerView {
             enableScripts: true
         };
         _panel.webview.onDidReceiveMessage(message => {
-            switch(message.command){
+            switch (message.command) {
                 case 'navigateToFile':
                     const uri = Uri.parse(message.url);
                     navigateToi18nTagInFile(uri, message.id, Number(message.occassion));
@@ -153,7 +153,7 @@ export class ManagerView {
                 ${this.styles()}
             </head>
             <body>
-                ${(this.successResults.size + this.errorResults.size) > 0 ? this.renderBody() : this.renderLoading()}
+                ${WorkspaceScanner.instance.initialized ? this.renderBody() : this.renderLoading()}
             </body>
         </html>
         `;
@@ -171,23 +171,31 @@ export class ManagerView {
             <h1>Found the following i18n tags in your project</h1>
             ${this.failedEntriesTable(this.errorResults, 'error')}
             ${this.failedEntriesTable(this.warningResults, 'warning')}
-
-            <h2>These tags were found without error or warning</h2>
-            <table border="1">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Content</th>
-                        <th>In files</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${Array.from(this.successResults.entries()).sort(([id1], [id2]) => id1.localeCompare(id2.toString())).map(([id, results]) => this.successTableRow(id, results)).join('')}
-                </tbody>
-            </table>
+            ${this.renderSuccessTable()}
             ${this.scripts()}
         `;
     }
+
+    private renderSuccessTable(): string {
+        if (this.successResults.size === 0) {
+            return '';
+        }
+        return `
+        <h2>These tags were found without error or warning</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Content</th>
+                    <th>In files</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${Array.from(this.successResults.entries()).sort(([id1], [id2]) => id1.localeCompare(id2.toString())).map(([id, results]) => this.successTableRow(id, results)).join('')}
+            </tbody>
+        </table>`;
+    }
+
     private failedEntriesTable(entries: Map<string, WalkerByIdResult[]>, type: 'error' | 'warning'): string {
         if (entries.size === 0) {
             return '';

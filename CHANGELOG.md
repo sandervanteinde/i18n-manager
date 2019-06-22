@@ -1,7 +1,8 @@
 # Changelog
-## [0.2.3] - 2019-06-21
+## [0.3.0] - 2019-06-21
 ### Added
 - Add pattern valdidation of i18n ids
+- Added configurations for validating rules
 
 ## [0.2.2] - 2019-06-21
 ### Added

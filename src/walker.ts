@@ -1,6 +1,5 @@
 import { HTMLElement, Node } from 'node-html-parser';
-import { WarningType } from './warning-type';
-import { ErrorType } from './error-type';
+import { ValidatorLevel } from './configuration';
 interface WalkerBaseResult {
     id: string;
     occassion: number;
@@ -14,17 +13,12 @@ interface WalkerFailResult extends WalkerBaseResult {
     message: string;
     value?: string;
 }
-interface WalkerWarningResult extends WalkerFailResult {
-    state: 'warning';
-    warning: WarningType;
-}
 interface WalkerErrorResult extends WalkerFailResult {
-    state: 'error';
-    error: ErrorType;
+    state: ValidatorLevel;
 }
 
 
-export type WalkerResult = WalkerSuccessResult | WalkerWarningResult | WalkerErrorResult;
+export type WalkerResult = WalkerSuccessResult | WalkerErrorResult;
 
 const i18nMatchPattern = /i18n(?:-([^=]+))?/;
 
@@ -59,9 +53,9 @@ export class Walker {
                 }
                 if (!value || value.trim().length === 0) {
                     if (attribute) {
-                        result.push({ id, occassion, state: 'error', error: ErrorType.NoAttributeFound, message: 'The i18n attribute was registered on a tag as attribute tag. However the matching attribute was not found!', attribute });
+                        result.push({ id, occassion, state: 'error', message: 'The i18n attribute was registered on a tag as attribute tag. However the matching attribute was not found!', attribute });
                     } else {
-                        result.push({ id, occassion, state: 'error', error: ErrorType.NoInnerHTMLFound, message: 'The i18n attribute was registered on an element without any inner HTML', attribute });
+                        result.push({ id, occassion, state: 'error', message: 'The i18n attribute was registered on an element without any inner HTML', attribute });
                     }
                 } else {
                     result.push({ id: element.attributes[key], occassion, value: value.trim(), state: 'success', attribute });

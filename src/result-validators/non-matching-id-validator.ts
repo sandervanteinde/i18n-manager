@@ -1,9 +1,9 @@
 import { IdResultValidator } from './result-validator';
 import { ResultValidatorContext } from './result-validator-context';
-import { ErrorType } from '../error-type';
+import { ValidatorLevel } from '../configuration';
 
 export class NonMatchingIdValidator implements IdResultValidator {
-    readonly type = "id-validator";
+    constructor(private _level: ValidatorLevel) { }
 
     validate(context: ResultValidatorContext): void {
         const { results } = context;
@@ -11,7 +11,7 @@ export class NonMatchingIdValidator implements IdResultValidator {
         var stripped0 = this.strippedString(values[0]);
         if (values.length > 1 && values.some(value => this.strippedString(value) !== stripped0)) {
             for (let i = 0; i < values.length; i++) {
-                results[i] = { ...results[i], state: 'error', error: ErrorType.ConflictingValuesForId, message: 'There are other items registered with this ID whose value do not match!' };
+                results[i] = { ...results[i], state: this._level, message: 'There are other items registered with this ID whose value do not match!' };
             }
         }
     }

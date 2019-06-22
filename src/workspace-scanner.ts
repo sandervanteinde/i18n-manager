@@ -2,11 +2,9 @@ import { workspace, Uri, ExtensionContext, TextDocument } from 'vscode';
 import { parse } from 'node-html-parser';
 import { Walker, WalkerResult } from './walker';
 import { Observable, ReplaySubject, Subject, of, from, combineLatest } from 'rxjs';
-import { takeUntil, map, share, shareReplay } from 'rxjs/operators';
-import { ErrorType } from './error-type';
-import { WarningType } from './warning-type';
-import { createUrl } from './utils';
+import { takeUntil, map, share, shareReplay, combineLatest as combineLatestOp } from 'rxjs/operators';
 import { HtmlTagsValidator, IdMatchesPatternValidator, DuplicateValuesValidator, NonMatchingIdValidator, IdResultValidator, ResultValidatorContext, EntryResultValidator, BaseValidator } from './result-validators';
+import { Configuration, ValidatorConfiguration } from './configuration';
 
 export type WalkerByIdResult = WalkerResult & {
     file: Uri;
@@ -35,21 +33,11 @@ export class WorkspaceScanner {
     readonly resultsByFile$ = this._resultsByFile$.asObservable();
     readonly resultsById$ = this._resultsById$.asObservable();
 
-    private readonly resultValidators: ReadonlyArray<IdResultValidator> = [
-        new NonMatchingIdValidator()
-    ];
-
-    private readonly entryValidators: ReadonlyArray<EntryResultValidator> = [
-        new HtmlTagsValidator(),
-        new DuplicateValuesValidator(),
-        new IdMatchesPatternValidator()
-    ];
-
-    private readonly validators: ReadonlyArray<BaseValidator> = [...this.resultValidators, ...this.entryValidators];
-
     readonly validatedResultsById$ = this._resultsById$.pipe(
-        map(res => {
-            for (const validator of this.validators) {
+        combineLatestOp(Configuration.instance.validatorConfiguration$),
+        map(([res, config]) => {
+            const { idValidators, entryValidators, validators } = this.getValidatorsByConfig(config);
+            for (const validator of validators) {
                 if (validator.initialize) {
                     validator.initialize();
                 }
@@ -58,11 +46,11 @@ export class WorkspaceScanner {
             copy.forEach((results, key) => {
                 var resultsCopy = [...results];
                 var ctx = new ResultValidatorContext(key, resultsCopy);
-                for (let resultValidator of this.resultValidators) {
+                for (let resultValidator of idValidators) {
                     resultValidator.validate(ctx);
                 }
                 resultsCopy.forEach((res, index) => {
-                    for (let resultValidator of this.entryValidators) {
+                    for (let resultValidator of entryValidators) {
                         if (res.state !== 'success') {
                             return;
                         }
@@ -75,7 +63,7 @@ export class WorkspaceScanner {
                 copy.set(key, resultsCopy);
             });
 
-            for (const validator of this.validators) {
+            for (const validator of validators) {
                 if (validator.cleanup) {
                     validator.cleanup();
                 }
@@ -164,6 +152,29 @@ export class WorkspaceScanner {
         const parsed = parse(text);
         const walker = new Walker(parsed);
         return walker.geti18nAttributes();
+    }
+
+
+    getValidatorsByConfig(config: Readonly<ValidatorConfiguration>): { entryValidators: EntryResultValidator[], idValidators: IdResultValidator[], validators: BaseValidator[] } {
+        var entryValidators: EntryResultValidator[] = [];
+        var idValidators: IdResultValidator[] = [];
+        if (config.duplicateValues.enabled) {
+            entryValidators.push(new DuplicateValuesValidator(config.duplicateValues.level));
+        }
+        if (config.idMustMatchRegex.enabled) {
+            entryValidators.push(new IdMatchesPatternValidator(config.idMustMatchRegex.level, config.idMustMatchRegex.pattern));
+        }
+        if (config.mismatchingValues.enabled) {
+            idValidators.push(new NonMatchingIdValidator(config.mismatchingValues.level));
+        }
+        if (config.warnForHtmlTags.enabled) {
+            entryValidators.push(new HtmlTagsValidator(config.warnForHtmlTags.level));
+        }
+        return {
+            entryValidators: entryValidators,
+            idValidators: idValidators,
+            validators: [...entryValidators, ...idValidators]
+        };
     }
 
     initialize(context: ExtensionContext): Observable<void> {
