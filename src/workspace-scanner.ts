@@ -196,7 +196,7 @@ export class WorkspaceScanner {
                             const entry = resultById.get(walkerResult.id) || [];
                             const newRecord = { ...walkerResult, file: uri, allByIdResults: entry };
                             entry.push(newRecord);
-                            resultById.set(walkerResult.id, [newRecord]);
+                            resultById.set(walkerResult.id, entry);
                         });
                     }
                 }));

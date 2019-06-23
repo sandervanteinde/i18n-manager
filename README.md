@@ -7,6 +7,13 @@ Manage your i18n tags in a more user friendly way!
 This extension gives you a webview that monitors all your i18n tags in your application.
 You can access this webview by opening the command `>Open i18n manager`
 
+## Fixers
+The i18n-manager also includes auto-fixers. These fixers can be accessed through the i18n manager as described above.
+
+The fixers can automatically replace i18n content on your page with new content so that it is uniform across your application.
+
+**NOTICE:** Always check after running a fixer if it has given you the wanted result. The files are not saved and opened for you to validate. You have to save the files yourself after you validated it. My recommendation is to run some kind of source control so you can always roll back.
+
 ## Known Issues
 
 - Does not work with i18n attributes that do not have an identifier

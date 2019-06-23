@@ -2,7 +2,7 @@ import { WebviewPanel, Uri, window, env } from 'vscode';
 import { WorkspaceScanner, WalkerByIdResult } from './workspace-scanner';
 import { takeUntil, withLatestFrom, map } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { navigateToi18nTagInFile, createUrl, escapeHtml, navigateToi18nContentsInFile } from './utils';
+import { navigateToi18nTagInFile, createUrl, navigateToi18nContentsInFile } from './utils';
 
 export class ManagerView {
     private _scanner = WorkspaceScanner.instance;
@@ -235,11 +235,11 @@ export class ManagerView {
                 <tr>
                     <th>ID</th>
                     <th>Content</th>
-                    <th>In files</th>
+                    <th>File name</th>
                 </tr>
             </thead>
             <tbody>
-                ${Array.from(this.successResults.entries()).sort(([id1], [id2]) => id1.localeCompare(id2.toString())).map(([id, results]) => this.successTableRow(id, results)).join('')}
+                ${Array.from(this.successResults.entries()).sort(([id1], [id2]) => id1.localeCompare(id2.toString())).map(([id, results]) => this.successTableRow(results)).join('')}
             </tbody>
         </table>`;
     }
@@ -260,7 +260,7 @@ export class ManagerView {
                 </tr>
             </thead>
             <tbody>
-                ${Array.from(entries.entries()).sort(([id1], [id2]) => id1.localeCompare(id2.toString())).map(([id, results]) => this.failedTableRow(id, results, type)).join('')}
+                ${Array.from(entries.entries()).sort(([id1], [id2]) => id1.localeCompare(id2.toString())).map(([id, results]) => this.failedTableRow(results, type)).join('')}
             </tbody>
         </table>`;
     }
@@ -275,10 +275,13 @@ export class ManagerView {
         return buttons.map(button => `<button class="fix-button" data-id="${res.id}" data-index="${index}" data-button-id="${button.id}">${button.label}</button>`).join('');
     }
 
-    private failedTableRow(id: string, results: WalkerByIdResult[], color: string) {
+    private failedTableRow(results: WalkerByIdResult[], color: string) {
         return results.map((res, index) => `
             <tr>
-                <td>${createUrl(res, res => res.id, 'id')}</span></td>
+                <td>${
+            res.id ? createUrl(res, res => res.id, 'id') :
+                '<span class="not-found">No value found</span>'
+            }</td>
                 <td>
                     ${createUrl(res, res => res.value, 'content')}
                 </td>
@@ -303,20 +306,21 @@ export class ManagerView {
         return uri.toString();
     }
 
-    private successTableRow(id: string, results: WalkerByIdResult[]) {
-        const [first] = results;
-        const result = first.value;
-        return `
+    private successTableRow(results: WalkerByIdResult[]) {
+        return results.map(res => `
             <tr>
-                <td><span class="copyable" data-id="${id}">${id}</span></td>
+                <td>${
+            res.id ? createUrl(res, res => res.id, 'id') :
+                '<span class="not-found">No value found</span>'
+            }</td>
                 <td>
-                    ${escapeHtml(result)}
+                    ${createUrl(res, res => res.value, 'content')}
                 </td>
                 <td>
-                    ${results.map(res => createUrl(res, res => this.getFileName(res.file))).join('<br/>')}
+                    ${this.getFileName(res.file)}
                 </td>
             </tr>
-        `;
+        `).join('');
     }
 
     deactivate() {
