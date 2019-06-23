@@ -1,12 +1,16 @@
 # Changelog
+## [0.4.0] - 2019-06-23
+### Added
+- Use Angular compiler to parse HTML
+- Added fixers - They make life easier to do basic operations. The following fixers are implemented:
+    - A fixer for non-matching values: Choose the value you want to use for all IDs
+    - A fixer for translations with HTML: Remove all the HTML in one click
+    - A fixer for multiple translations on the same ID: Click to set all IDs for a given translation to that ID.
+
 ## [0.3.0] - 2019-06-21
 ### Added
 - Add pattern valdidation of i18n ids
 - Added configurations for validating rules
-- Use Angular compiler to parse HTML
-- Add fixer for non-matching values
-- Add fixer for tags with HTML
-- Add fixer for duplicate IDs
 
 ## [0.2.2] - 2019-06-21
 ### Added
