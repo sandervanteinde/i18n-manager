@@ -1,14 +1,15 @@
-import { WebviewPanel, Uri, workspace, window, env } from 'vscode';
+import { WebviewPanel, Uri, window, env } from 'vscode';
 import { WorkspaceScanner, WalkerByIdResult } from './workspace-scanner';
-import { first, takeUntil } from 'rxjs/operators';
-import { Subject, combineLatest } from 'rxjs';
-import { WalkerResult, Walker } from './walker';
-import { distinct, navigateToi18nTagInFile, createUrl, escapeHtml } from './utils';
+import { takeUntil, withLatestFrom, map } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { navigateToi18nTagInFile, createUrl, escapeHtml, navigateToi18nContentsInFile } from './utils';
 
 export class ManagerView {
     private _scanner = WorkspaceScanner.instance;
     private _onDestroy$ = new Subject<void>();
     private _dirty = false;
+
+    private _fixButtonPressed$ = new Subject<{ id: string, buttonId: string, index: number }>();
 
     errorResults = new Map<string, WalkerByIdResult[]>();
     warningResults = new Map<string, WalkerByIdResult[]>();
@@ -20,17 +21,23 @@ export class ManagerView {
             enableScripts: true
         };
         _panel.webview.onDidReceiveMessage(message => {
+            let uri: Uri;
             switch (message.command) {
-                case 'navigateToFile':
-                    const uri = Uri.parse(message.url);
+                case 'navigateToId':
+                    uri = Uri.parse(message.url);
                     navigateToi18nTagInFile(uri, message.id, Number(message.occassion));
                     break;
-                case 'copyToClipboard':
-                    env.clipboard.writeText(message.id);
-                    window.showInformationMessage(`Copied text '${message.id}' to the clipboard`);
+                case 'navigateToContent':
+                    uri = Uri.parse(message.url);
+                    navigateToi18nContentsInFile(uri, message.id, Number(message.occassion));
                     break;
-            }
-            if (message.command === 'navigateToFile') {
+                case 'copyToClipboard':
+                    env.clipboard.writeText(message.text);
+                    window.showInformationMessage(`Copied text '${message.text}' to the clipboard`);
+                    break;
+                case 'fix':
+                    this._fixButtonPressed$.next({ id: message.id, buttonId: message.buttonId, index: message.index });
+                    break;
             }
         });
         _panel.onDidChangeViewState(state => {
@@ -67,6 +74,20 @@ export class ManagerView {
                 });
                 this.render();
             });
+        this._fixButtonPressed$.pipe(
+            withLatestFrom(this._scanner.validatedResultsById$),
+            map(([buttonData, validationResult]) => ({ ...buttonData, validationResult }))
+        ).subscribe(data => {
+            const results = data.validationResult.get(data.id);
+            if (!results || results.length < data.index) {
+                return;
+            }
+
+            const { fixer } = results[data.index];
+            if (fixer) {
+                fixer.startFix(data.buttonId);
+            }
+        });
     }
 
     private styles(): string {
@@ -80,14 +101,36 @@ export class ManagerView {
                 cursor: pointer;
                 color: var(--vscode-editorLink-activeForeground);
             }
+
             .error {
                 color: var(--vscode-editorError-foreground);
             }
+
             .warning {
                 color: var(--vscode-editorWarning-foreground);
             }
+
             .not-found {
                 font-style: italic;
+            }
+
+            button {    
+                background-color: var(--vscode-button-background);
+                box-shadow: none;
+                color: var(--vscode-button-foreground);
+                -webkit-appearance: button-bevel;
+                transition: 100ms;
+                cursor: pointer;
+                margin: 0 10px;
+            }
+
+            button:hover {
+                background-color: var(--vscode-button-hoverBackground);
+            }
+
+            .button-container {
+                display: flex;
+                flex-wrap: wrap;
             }
         </style>`;
     }
@@ -97,45 +140,50 @@ export class ManagerView {
         <script>
             const copyable = 'copyable';
             const link = 'link';
+            const fixButton = 'fix-button';
+            debugger;
+
             const vscode = acquireVsCodeApi();
-            const linkCallback = event => {
+            const findEventElement = (event, clss) => {
                 for(let i = 0; i < event.path.length; i++){
                     const path = event.path[i];
-                    if(path.classList.contains(link) && (!path.classList.contains(copyable) || !event.shiftKey)){
-                        const { url, id, occassion } = path.dataset;
-                        vscode.postMessage({
-                            command: 'navigateToFile',
-                            url,
-                            id,
-                            occassion
-                        });
-                        return;
+                    if(path.classList.contains(clss)){
+                        return path;
                     }
+                }
+            };
+            const linkCallback = event => {
+                const element = findEventElement(event, link);
+                if(!element.classList.contains(copyable) || !event.shiftKey){
+                    const { to } = element.dataset;
+                    vscode.postMessage({
+                        command: to === 'content' ? 'navigateToContent' : 'navigateToId',
+                        ...element.dataset
+                    });
                 }
             };
 
             const copyableCallback = event => {
                 if(!event.shiftKey) return;
-                for(let i = 0; i < event.path.length; i++){
-                    const path = event.path[i];
-                    if(path.classList.contains('copyable')){
-                        const { id } = path.dataset;
-                        vscode.postMessage({
-                            command: 'copyToClipboard',
-                            id
-                        });
-                        return;
-                    }
-                }
+                const element = findEventElement(event, copyable);
+                vscode.postMessage({
+                    command: 'copyToClipboard',
+                    text: element.innerHTML
+                });
+                return;
             };
 
-            document.querySelectorAll(\`.\${link}\`).forEach(linkTag => {
-                linkTag.addEventListener('click', linkCallback);
-            });
+            const fixButtonCallback = event => {
+                const fixbutton = findEventElement(event, fixButton);
+                vscode.postMessage({
+                    command: 'fix',
+                    ...fixbutton.dataset
+                });
+            }
 
-            document.querySelectorAll(\`.\${copyable}\`).forEach(clickTag => {
-                clickTag.addEventListener('click', copyableCallback);
-            });
+            document.querySelectorAll(\`.\${link}\`).forEach(linkTag => linkTag.addEventListener('click', linkCallback));
+            document.querySelectorAll(\`.\${copyable}\`).forEach(clickTag => clickTag.addEventListener('click', copyableCallback));
+            document.querySelectorAll(\`.\${fixButton}\`).forEach(fixButton => fixButton.addEventListener('click', fixButtonCallback));
         </script>`;
     }
 
@@ -208,6 +256,7 @@ export class ManagerView {
                     <th>ID</th>
                     <th>Content</th>
                     <th>Error</th>
+                    <th>Fixers</th>
                 </tr>
             </thead>
             <tbody>
@@ -216,20 +265,33 @@ export class ManagerView {
         </table>`;
     }
 
+    private renderFixerButtons(res: WalkerByIdResult, index: number): string {
+        const { fixer } = res;
+        if (!fixer) {
+            return 'No fixer available';
+        }
+        const buttons = fixer.getFixButtons();
 
+        return buttons.map(button => `<button class="fix-button" data-id="${res.id}" data-index="${index}" data-button-id="${button.id}">${button.label}</button>`).join('');
+    }
 
     private failedTableRow(id: string, results: WalkerByIdResult[], color: string) {
-        return `
+        return results.map((res, index) => `
             <tr>
-                <td><span class="copyable" data-id="${id}">${id}</span></td>
+                <td>${createUrl(res, res => res.id, 'id')}</span></td>
                 <td>
-                    ${results.map(res => createUrl(res, res => res.value)).join('<br/>')}
+                    ${createUrl(res, res => res.value, 'content')}
                 </td>
                 <td class="${color}">
-                    ${distinct(results.map(r => r.state !== 'success' && r.message)).join('<br/>')}
+                    ${res.state !== 'success' && res.message}
+                </td>
+                <td>
+                    <div class="button-container">
+                        ${this.renderFixerButtons(res, index)}
+                    </div>
                 </td>
             </tr>
-        `;
+        `).join('');
     }
 
     private getFileName(uri: Uri): string {

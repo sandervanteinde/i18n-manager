@@ -1,13 +1,16 @@
 import { workspace, Uri, ExtensionContext, TextDocument } from 'vscode';
-import { parse } from 'node-html-parser';
 import { Walker, WalkerResult } from './walker';
 import { Observable, ReplaySubject, Subject, of, from, combineLatest } from 'rxjs';
 import { takeUntil, map, share, shareReplay, combineLatest as combineLatestOp } from 'rxjs/operators';
 import { HtmlTagsValidator, IdMatchesPatternValidator, DuplicateValuesValidator, NonMatchingIdValidator, IdResultValidator, ResultValidatorContext, EntryResultValidator, BaseValidator } from './result-validators';
 import { Configuration, ValidatorConfiguration } from './configuration';
+import { Fixable } from './result-validators/fixable';
+import { toTokens } from './utils';
 
 export type WalkerByIdResult = WalkerResult & {
     file: Uri;
+    fixer?: Fixable
+    allByIdResults: WalkerByIdResult[];
 };
 
 export class WorkspaceScanner {
@@ -111,13 +114,10 @@ export class WorkspaceScanner {
 
         // add new id maps
         results.forEach(res => {
-            const entry = newIdMap.get(res.id);
-            const newRecord = { ...res, file: document.uri };
-            if (entry) {
-                entry.push(newRecord);
-            } else {
-                newIdMap.set(res.id, [newRecord]);
-            }
+            const entry = newIdMap.get(res.id) || [];
+            const newRecord = { ...res, file: document.uri, allByIdResults: entry };
+            entry.push(newRecord);
+            newIdMap.set(res.id, entry);
         });
 
         this._resultsByFile$.next(newFileMap);
@@ -145,11 +145,7 @@ export class WorkspaceScanner {
     }
 
     private getI18nResultsForFile(document: TextDocument): WalkerResult[] {
-        const text = document.getText();
-        if (!text) {
-            return [];
-        }
-        const parsed = parse(text);
+        const parsed = toTokens(document);
         const walker = new Walker(parsed);
         return walker.geti18nAttributes();
     }
@@ -197,13 +193,10 @@ export class WorkspaceScanner {
                     if (walkerResults.length > 0) {
                         resultByFileName.set(uri.toString(), walkerResults);
                         walkerResults.forEach(walkerResult => {
-                            const entry = resultById.get(walkerResult.id);
-                            const newRecord = { ...walkerResult, file: uri };
-                            if (entry) {
-                                entry.push(newRecord);
-                            } else {
-                                resultById.set(walkerResult.id, [newRecord]);
-                            }
+                            const entry = resultById.get(walkerResult.id) || [];
+                            const newRecord = { ...walkerResult, file: uri, allByIdResults: entry };
+                            entry.push(newRecord);
+                            resultById.set(walkerResult.id, [newRecord]);
                         });
                     }
                 }));

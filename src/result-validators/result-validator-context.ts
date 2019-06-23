@@ -1,7 +1,7 @@
-import { WalkerResult } from '../walker';
+import { WalkerByIdResult } from '../workspace-scanner';
 
 export class ResultValidatorContext {
-    constructor(readonly id: string, readonly results: WalkerResult[]) {
+    constructor(readonly id: string, readonly results: WalkerByIdResult[]) {
 
     }
 }

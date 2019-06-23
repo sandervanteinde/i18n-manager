@@ -20,7 +20,11 @@ export class IdMatchesPatternValidator implements EntryResultValidator {
     }
     validate(item: WalkerByIdResult): WalkerByIdResult {
         if (!this._pattern.exec(item.id)) {
-            return { ...item, state: this._level, message: `The id ${item.id} does not match required pattern: ${this._pattern}` };
+            return {
+                ...item,
+                state: this._level,
+                message: `The id ${item.id} does not match required pattern: ${this._pattern}`
+            };
         }
         return item;
     }

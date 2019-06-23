@@ -3,6 +3,10 @@
 ### Added
 - Add pattern valdidation of i18n ids
 - Added configurations for validating rules
+- Use Angular compiler to parse HTML
+- Add fixer for non-matching values
+- Add fixer for tags with HTML
+- Add fixer for duplicate IDs
 
 ## [0.2.2] - 2019-06-21
 ### Added

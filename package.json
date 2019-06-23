@@ -137,6 +137,7 @@
         "webpack-cli": "^3.3.4"
     },
     "dependencies": {
+        "@angular/compiler": "^8.0.2",
         "node-html-parser": "^1.1.15",
         "rxjs": "^6.5.2"
     }
