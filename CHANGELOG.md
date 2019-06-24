@@ -1,4 +1,9 @@
 # Changelog
+## Dev
+### Changes
+- Fixers are now single-button and they work through the vscode internal prompt
+- The i18n content fixer now has the possibility of adding a completely new message
+
 ## [0.4.0] - 2019-06-23
 ### Added
 - Use Angular compiler to parse HTML

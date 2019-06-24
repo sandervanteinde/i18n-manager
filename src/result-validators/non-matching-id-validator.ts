@@ -31,21 +31,36 @@ export class NonMatchingIdValidator implements IdResultValidator {
     }
 
     private createButtonCallback(values: WalkerByIdResult[]): () => FixableButton[] {
-        return () => values.map((value, index) => ({
-            label: `Use <strong>${value.value}</strong>`,
-            id: index.toString()
-        }));
+        return () => [{
+            label: `Select value`,
+            id: 'select-value'
+        }];
     }
 
     private createFixCallback(id: string, results: WalkerByIdResult[]): (id: string) => void {
-        return buttonId => {
-            const value = results[Number(buttonId)].value;
-            if (!value) {
-                return;
+        const useCustomMsg = 'Use custom message';
+        const doReplace = (newValue: string) => {
+
+            for (let file of new Set(results.filter(res => res.value !== newValue).map(res => res.file.toString()))) {
+                replaceI18nValuesById(Uri.parse(file), id, newValue);
             }
-            for (let file of new Set(results.filter(res => res.value !== value).map(res => res.file.toString()))) {
-                replaceI18nValuesById(Uri.parse(file), id, value);
-            }
+        };
+        return () => {
+            let set = new Set(results.filter(Boolean).map(x => x.value as string));
+            window.showQuickPick([...Array.from(set), useCustomMsg]).then(newValue => {
+                if (!newValue) {
+                    return;
+                }
+                if (newValue === useCustomMsg) {
+                    window.showInputBox({ prompt: `Give new content for the i18n id ${id}`, value: results[0].value }).then(inputValue => {
+                        if (inputValue) {
+                            doReplace(inputValue);
+                        }
+                    })
+                } else {
+                    doReplace(newValue);
+                }
+            });
         };
     }
 

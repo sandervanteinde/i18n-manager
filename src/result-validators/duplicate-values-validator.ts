@@ -3,7 +3,7 @@ import { WalkerByIdResult } from '../workspace-scanner';
 import { createUrl, replaceI18nIdsById } from '../utils';
 import { ValidatorLevel } from '../configuration';
 import { Fixable } from './fixable';
-import { Uri } from 'vscode';
+import { Uri, window } from 'vscode';
 
 export class DuplicateValuesValidator implements EntryResultValidator {
     foundValues = new Map<string, WalkerByIdResult>();
@@ -31,20 +31,24 @@ export class DuplicateValuesValidator implements EntryResultValidator {
     createFixer(result: WalkerByIdResult, existing: WalkerByIdResult): Fixable {
         return {
             getFixButtons: () => [
-                { label: `Use ${result.id}`, id: 'use-result' },
-                { label: `Use ${existing.id}`, id: 'use-existing' }
+                { label: `Select id`, id: 'select-id' }
             ],
-            startFix: (id: 'use-result' | 'use-existing') => {
-                let replace = result;
-                let replaceWith = existing;
-                if (id === 'use-result') {
-                    [replace, replaceWith] = [replaceWith, replace];
-                }
+            startFix: () => {
+                window.showQuickPick([existing.id as string, result.id as string]).then(selectedId => {
+                    if (!selectedId) {
+                        return;
+                    }
+                    let replace = result;
+                    let replaceWith = existing;
+                    if (selectedId === replace.id) {
+                        [replace, replaceWith] = [replaceWith, replace];
+                    }
 
-                for (let files of new Set(replace.allByIdResults.map(x => x.file.toString()))) {
-                    let uri = Uri.parse(files);
-                    replaceI18nIdsById(uri, replace.id, replaceWith.id);
-                }
+                    for (let files of new Set(replace.allByIdResults.map(x => x.file.toString()))) {
+                        let uri = Uri.parse(files);
+                        replaceI18nIdsById(uri, replace.id, replaceWith.id);
+                    }
+                })
             }
         }
     }
