@@ -2,7 +2,7 @@ import { workspace, Uri, ExtensionContext, TextDocument } from 'vscode';
 import { Walker, WalkerResult } from './walker';
 import { Observable, ReplaySubject, Subject, of, from, combineLatest } from 'rxjs';
 import { takeUntil, map, share, shareReplay, combineLatest as combineLatestOp } from 'rxjs/operators';
-import { HtmlTagsValidator, IdMatchesPatternValidator, DuplicateValuesValidator, NonMatchingIdValidator, IdResultValidator, ResultValidatorContext, EntryResultValidator, BaseValidator } from './result-validators';
+import { HtmlTagsValidator, IdMatchesPatternValidator, DuplicateValuesValidator, NonMatchingIdValidator, IdResultValidator, ResultValidatorContext, EntryResultValidator, BaseValidator, InterpolationValidator } from './result-validators';
 import { Configuration, ValidatorConfiguration } from './configuration';
 import { Fixable } from './result-validators/fixable';
 import { toTokens } from './utils';
@@ -165,6 +165,9 @@ export class WorkspaceScanner {
         }
         if (config.warnForHtmlTags.enabled) {
             entryValidators.push(new HtmlTagsValidator(config.warnForHtmlTags.level));
+        }
+        if(config.warnForInterpolations.enabled){
+            entryValidators.push(new InterpolationValidator(config.warnForInterpolations.level));
         }
         return {
             entryValidators: entryValidators,

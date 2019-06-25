@@ -20,6 +20,10 @@ export interface ValidatorConfiguration {
         enabled: boolean,
         level: ValidatorLevel
     }>;
+    warnForInterpolations: Readonly<{
+        enabled: boolean,
+        level: ValidatorLevel
+    }>;
 }
 
 export interface NotificationConfiguration {
@@ -81,6 +85,10 @@ export class Configuration {
             warnForHtmlTags: {
                 enabled: config.get<boolean>('mismatchingValues.enabled', true),
                 level: config.get<ValidatorLevel>('mismatchingValues.level', 'warning')
+            },
+            warnForInterpolations: {
+                enabled: config.get<boolean>('warnForInterpolations.enabled', false),
+                level: config.get<ValidatorLevel>('warnForInterpolations.level', 'warning')
             }
         };
         this._validatorConfiguration$.next(validators);

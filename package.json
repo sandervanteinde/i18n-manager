@@ -2,7 +2,7 @@
     "name": "i18n-manager",
     "displayName": "i18n-manager",
     "description": "Manages i18n tags that are used in HTML templates",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "license": "SEE LICENSE IN LICENSE",
     "engines": {
         "vscode": "^1.35.0"
@@ -79,9 +79,22 @@
                 "sandervanteinde.i18n-manager.validators.warnForHtmlTags.enabled": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Mark a i18n tag as invalid if the value contains HTML tags"
+                    "description": "Mark i18n content as invalid if it contains HTML Tags"
                 },
                 "sandervanteinde.i18n-manager.validators.warnForHtmlTags.level": {
+                    "type": "string",
+                    "enum": [
+                        "warning",
+                        "error"
+                    ],
+                    "default": "warning"
+                },
+                "sandervanteinde.i18n-manager.validators.warnForInterpolations.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Mark i18n content as invalid if it contains interpolations"
+                },
+                "sandervanteinde.i18n-manager.validators.warnForInterpolations.level": {
                     "type": "string",
                     "enum": [
                         "warning",

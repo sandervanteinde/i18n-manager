@@ -1,5 +1,8 @@
 # Changelog
-## Dev
+## [0.4.1] - 2019-06-25
+### Added
+- Validator for Angular interpolations
+
 ### Changes
 - Fixers are now single-button and they work through the vscode internal prompt
 - The i18n content fixer now has the possibility of adding a completely new message
