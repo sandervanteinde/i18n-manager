@@ -31,6 +31,10 @@ export interface NotificationConfiguration {
     minimumLevel: ValidatorLevel;
 }
 
+export interface LanguageConfiguration {
+    i18nHtmlAutoCompletion: boolean;
+}
+
 export class Configuration {
     static get instance(): Configuration {
         if (!this._instance) {
@@ -49,12 +53,16 @@ export class Configuration {
     private _notificationsConfiguration$ = new ReplaySubject<Readonly<NotificationConfiguration>>(1);
     notificationsConfiguration$ = this._notificationsConfiguration$.asObservable();
 
+    private _languageConfiguration$ = new ReplaySubject<Readonly<LanguageConfiguration>>(1);
+    languageConfiguration$ = this._languageConfiguration$.asObservable();
+
     constructor(context: ExtensionContext) {
         const disposable = workspace.onDidChangeConfiguration(ev => this.onConfigurationChanged(ev));
         context.subscriptions.push(disposable);
 
         this.pushNewValidatorsConfiguration();
         this.pushNewNotificationsConfiguration();
+        this.pushNewLanguageConfiguration();
     }
 
     private onConfigurationChanged(event: ConfigurationChangeEvent): void {
@@ -63,6 +71,9 @@ export class Configuration {
         }
         if (event.affectsConfiguration('sandervanteinde.i18n-manager.notifications')) {
             this.pushNewNotificationsConfiguration();
+        }
+        if (event.affectsConfiguration('sandervanteinde.i18n-manager.language')) {
+            this.pushNewLanguageConfiguration();
         }
     }
 
@@ -103,6 +114,15 @@ export class Configuration {
         };
 
         this._notificationsConfiguration$.next(notifications);
+    }
+
+    private pushNewLanguageConfiguration(): void {
+        const config = workspace.getConfiguration('sandervanteinde.i18n-manager.language');
+        const language: LanguageConfiguration = {
+            i18nHtmlAutoCompletion: config.get<boolean>('i18nHtmlAutoCompletion', true)
+        };
+
+        this._languageConfiguration$.next(language);
     }
 
 }

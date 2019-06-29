@@ -14,9 +14,16 @@ The fixers can automatically replace i18n content on your page with new content 
 
 **NOTICE:** Always check after running a fixer if it has given you the wanted result. The files are not saved and opened for you to validate. You have to save the files yourself after you validated it. My recommendation is to run some kind of source control so you can always roll back.
 
+## Auto completion
+The i18n manager has auto completion and is able to auto complete i18n tags. If you are in a HTML file and you are typing within a i18n tag, you will get suggested i18n ids based on the ones available in your solution. It will also automatically fill the content of the matching attribute or body.
+
+This is enabled by default, and can be disabled through the `sandervanteinde.i18n-manager.language.i18nHtmlAutoCompletion` property.
+
 ## Known Issues
 
 - Does not work with i18n attributes that do not have an identifier
+- Does not work in the `@Component({template: ''})` templates
+- Autocompletion fails when trying to autocomplete an i18n tag in a incomplete HTML tag
 
 ## Attribution
 

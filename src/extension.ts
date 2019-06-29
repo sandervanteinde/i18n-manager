@@ -5,6 +5,8 @@ import { WorkspaceScanner } from './workspace-scanner';
 import { ManagerView } from './manager-view';
 import { GlobalNotifications } from './global-notifications';
 import { Configuration } from './configuration';
+import { CompletionProvider } from './completion-provider';
+
 let panel: WebviewPanel | undefined = undefined;
 let wrapper: ManagerView | undefined = undefined;
 // this method is called when your extension is activated
@@ -37,6 +39,8 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(disposable);
 
     GlobalNotifications.activate(context);
+
+    CompletionProvider.initialize(context);
 
     console.log('[i18n-manager] Started extension');
 }

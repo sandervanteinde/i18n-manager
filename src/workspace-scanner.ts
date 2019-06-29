@@ -166,7 +166,7 @@ export class WorkspaceScanner {
         if (config.warnForHtmlTags.enabled) {
             entryValidators.push(new HtmlTagsValidator(config.warnForHtmlTags.level));
         }
-        if(config.warnForInterpolations.enabled){
+        if (config.warnForInterpolations.enabled) {
             entryValidators.push(new InterpolationValidator(config.warnForInterpolations.level));
         }
         return {

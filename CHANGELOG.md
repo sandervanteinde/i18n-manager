@@ -1,4 +1,8 @@
 # Changelog
+## [0.5.0] - 2019-06-29
+### Added
+- Autocompletion
+
 ## [0.4.1] - 2019-06-25
 ### Added
 - Validator for Angular interpolations

@@ -1,6 +1,6 @@
 import { Uri, workspace, window, Selection, Position, Range, TextEditorRevealType, TextDocument, TextEditor, DocumentHighlight } from 'vscode';
 import { WalkerByIdResult } from './workspace-scanner';
-import { HtmlParser, ParseTreeResult, Node, Element, ParseSourceSpan } from '@angular/compiler';
+import { HtmlParser, ParseTreeResult, Node, Element, ParseSourceSpan, Text, ParseLocation } from '@angular/compiler';
 
 export const i18nMatchPattern = /i18n(?:-([^=]+))?/;
 export function distinct<T>(arr: Array<T>): Array<T> {
@@ -174,4 +174,55 @@ export function objectHasFunctions<T extends object>(object: T, ...names: (keyof
         }
     }
     return true;
+}
+
+export function isPositionBetweenSpans(position: Position, start: ParseLocation, end: ParseLocation) {
+    if (start.line === position.line) {
+        if (end.line === position.line) {
+            return start.col <= position.character && end.col >= position.character;
+        } else {
+            return start.col <= position.character;
+        }
+    } else if (end.line === position.line) {
+        return end.col >= position.character;
+    } else {
+        return start.line < position.character && end.line > position.line;
+    }
+}
+
+export function isPositionInNode(position: Position, node: Node): boolean {
+    let start: ParseLocation;
+    let end: ParseLocation;
+    if (node instanceof Element) {
+        start = node.sourceSpan.start;
+        end = (node.endSourceSpan || node.sourceSpan).end;
+    } else if (node instanceof Text) {
+        start = node.sourceSpan.start;
+        end = node.sourceSpan.end;
+    } else {
+        throw new Error('node type not supported');
+    }
+    return isPositionBetweenSpans(position, start, end);
+}
+
+export function findNodeAtLocation(result: ParseTreeResult | Node, position: Readonly<Position>): Node | undefined {
+    if (result instanceof ParseTreeResult) {
+        const nodeWithPosition = result.rootNodes.find(x => isPositionInNode(position, x));
+        if (nodeWithPosition) {
+            return findNodeAtLocation(nodeWithPosition, position);
+        }
+    } else {
+        if (result instanceof Element) {
+            if (result.children.length === 0) {
+                return result;
+            } else {
+                const childWithPosition = result.children.find(x => isPositionInNode(position, x));
+                return (childWithPosition && findNodeAtLocation(childWithPosition, position)) || result;
+            }
+        } else if (result instanceof Text) {
+            return result;
+        } else {
+            throw new Error('Not implemented');
+        }
+    }
 }
