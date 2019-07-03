@@ -1,16 +1,15 @@
-import { ExtensionContext, languages, CompletionItem, ProviderResult, CompletionList, TextDocument, Position, workspace, window, MarkdownString, TextEdit, Range } from "vscode";
+import { ExtensionContext, languages, CompletionItem, TextDocument, Position, MarkdownString, TextEdit, Range, CompletionList, CompletionItemKind } from "vscode";
 import { Configuration } from "./configuration";
-import { combineLatest, ReplaySubject, BehaviorSubject, timer } from "rxjs";
+import { timer } from "rxjs";
 import { WorkspaceScanner, WalkerByIdResult } from "./workspace-scanner";
-import { filter, map, distinctUntilChanged, first, race } from "rxjs/operators";
-import { Token, ParseTreeResult, Attribute, Element, AotCompiler, ParseLocation } from "@angular/compiler";
-import { toTokens, findNodeAtLocation, isPositionInNode, isPositionBetweenSpans } from "./utils";
-import { stringify } from "@angular/compiler/src/util";
+import { map, distinctUntilChanged, first, race } from "rxjs/operators";
+import { ParseTreeResult, Attribute, Element } from "@angular/compiler";
+import { toTokens, findNodeAtLocation, isPositionBetweenSpans } from "./utils";
 
 export class CompletionProvider {
     private _dispose: (() => void) | undefined;
     private _tokenedOpenDocument: ParseTreeResult | undefined = undefined;
-    private constructor(private _context: ExtensionContext) {
+    private constructor(_context: ExtensionContext) {
         const subscription = Configuration.instance.languageConfiguration$.pipe(
             map(x => x.i18nHtmlAutoCompletion),
             distinctUntilChanged()
@@ -50,74 +49,70 @@ export class CompletionProvider {
         this._tokenedOpenDocument = toTokens(document);
     }
 
-    private createCompletionItem({ element, attribute }: { element: Element, attribute: Attribute }, id: string, results: WalkerByIdResult[], searchString: string): CompletionItem {
+    private createCompletionItem({ element, attribute }: { element: Element, attribute: Attribute }, id: string, results: WalkerByIdResult[], searchString: string): CompletionItem | void {
         const edits: TextEdit[] = [];
         const value = results.length > 0 && results[0].value;
-        if (value) {
-            if (attribute.name === 'i18n') {
-                if (element.children.length > 0) {
-                    const start = element.children[0].sourceSpan.start;
-                    const end = element.children[element.children.length - 1].sourceSpan.end;
-                    const range = new Range(start.line, start.col, end.line, end.col);
-                    edits.push(TextEdit.replace(range, value));
-                } else {
-                    edits.push(TextEdit.insert(new Position(element.sourceSpan.end.line, element.sourceSpan.end.col), value));
-                }
+        if (!value) {
+            return;
+        }
+        if (attribute.name === 'i18n') {
+            if (element.children.length > 0) {
+                const start = element.children[0].sourceSpan.start;
+                const end = element.children[element.children.length - 1].sourceSpan.end;
+                const range = new Range(start.line, start.col, end.line, end.col);
+                edits.push(TextEdit.replace(range, value));
             } else {
-                const i18nAttributeName = attribute.name.substr(5);
-                const matchingAttribute = element.attrs.find(attr => attr.name === i18nAttributeName);
-                if (!matchingAttribute) {
-                    edits.push(TextEdit.insert(new Position(element.sourceSpan.end.line, element.sourceSpan.end.col - 1), ` ${i18nAttributeName}="${value}"`));
-                } else {
-                    const span = matchingAttribute.valueSpan;
-                    if (span) {
-                        const range = new Range(span.start.line, span.start.col, span.end.line, span.end.col);
-                        edits.push(TextEdit.replace(range, value));
-                    }
+                edits.push(TextEdit.insert(new Position(element.sourceSpan.end.line, element.sourceSpan.end.col), value));
+            }
+        } else {
+            const i18nAttributeName = attribute.name.substr(5);
+            const matchingAttribute = element.attrs.find(attr => attr.name === i18nAttributeName);
+            if (!matchingAttribute) {
+                edits.push(TextEdit.insert(new Position(element.sourceSpan.end.line, element.sourceSpan.end.col - 1), ` ${i18nAttributeName}="${value}"`));
+            } else {
+                const span = matchingAttribute.valueSpan;
+                if (span) {
+                    const range = new Range(span.start.line, span.start.col, span.end.line, span.end.col);
+                    edits.push(TextEdit.replace(range, value));
                 }
             }
         }
-        return {
-            label: id,
-            insertText: searchString.startsWith('@@') && id.substr(2) || id,
-            documentation: new MarkdownString(`Sets this i18n attribute and its value to id: **${id}** value: **${results[0].value}**`),
-            additionalTextEdits: edits
-        };
+        const item = new CompletionItem(id, CompletionItemKind.Text);
+        item.insertText = searchString.startsWith('@@') && id.substr(2) || id;
+        item.documentation = new MarkdownString(`Sets this i18n attribute and its value to id: **${id}** value: **${results[0].value}**`);
+        item.additionalTextEdits = edits;
+        return item;
     }
 
     private start() {
         const codeCompletionProvider = languages.registerCompletionItemProvider('html', {
             provideCompletionItems: (document, position) => {
                 console.log(...arguments);
-                return new Promise((res, err) => {
-                    try {
-                        this.tokenizeDocument(document);
-                        const result = this.isInI18nTag(position);
-                        if (!result) {
-                            err();
-                            return;
+                this.tokenizeDocument(document);
+                const result = this.isInI18nTag(position);
+                if (!result) {
+                    return undefined;
+                }
+
+                let map: ReadonlyMap<string, WalkerByIdResult[]> = new Map();
+                WorkspaceScanner.instance.resultsById$.pipe(first()).subscribe(resultByIdMap => {
+                    map = resultByIdMap;
+                });
+                
+                if(map.size === 0){
+                    return undefined;
+                }
+                const currentAttrVal = result.attribute.value;
+                const completionItems: CompletionItem[] = [];
+                map.forEach((val, id) => {
+                    if (id !== currentAttrVal && id.startsWith(currentAttrVal)) {
+                        const completionItem = this.createCompletionItem(result, id, val, currentAttrVal);
+                        if(completionItem){
+                            completionItems.push(completionItem);
                         }
-                        timer(1000).pipe(
-                            map(() => new Map()),
-                            race(WorkspaceScanner.instance.resultsById$),
-                            first()
-                        ).subscribe(map => {
-                            const currentAttrVal = result.attribute.value;
-                            const completionItems: CompletionItem[] = [];
-                            map.forEach((val, id) => {
-                                if (id !== currentAttrVal && id.startsWith(currentAttrVal)) {
-                                    completionItems.push(this.createCompletionItem(result, id, val, currentAttrVal));
-                                }
-                            });
-                            res({
-                                isIncomplete: false,
-                                items: completionItems
-                            });
-                        });
-                    } catch (error) {
-                        err(error);
                     }
                 });
+                return new CompletionList(completionItems, false);
             }
         });
         this._dispose = () => {
