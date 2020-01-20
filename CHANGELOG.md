@@ -1,4 +1,8 @@
 # Changelog
+## [0.5.1] - 2020-01-20
+### Changes
+- The display of the titles in the i18n manager changed to display the amount of values
+
 ## [0.5.0] - 2019-06-29
 ### Added
 - Autocompletion
