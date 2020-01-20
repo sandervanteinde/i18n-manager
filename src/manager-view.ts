@@ -248,8 +248,9 @@ export class ManagerView {
         if (entries.size === 0) {
             return '';
         }
+        const entriesCopy = Array.from(entries.entries());
         return `
-        <h2>The following tags contained ${type}s</h2>
+        <h2>Found {entriesCopy.reduce((size, [id, results]) => size + results.length, 0)} ${type}s in ${entriesCopy.length} tags</h2>
         <table border="1">
             <thead>
                 <tr>
@@ -260,7 +261,7 @@ export class ManagerView {
                 </tr>
             </thead>
             <tbody>
-                ${Array.from(entries.entries()).sort(([id1], [id2]) => id1.localeCompare(id2.toString())).map(([id, results]) => this.failedTableRow(results, type)).join('')}
+                ${entriesCopy.sort(([id1], [id2]) => id1.localeCompare(id2.toString())).map(([id, results]) => this.failedTableRow(results, type)).join('')}
             </tbody>
         </table>`;
     }
