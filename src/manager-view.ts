@@ -250,7 +250,7 @@ export class ManagerView {
         }
         const entriesCopy = Array.from(entries.entries());
         return `
-        <h2>Found {entriesCopy.reduce((size, [id, results]) => size + results.length, 0)} ${type}s in ${entriesCopy.length} tags</h2>
+        <h2>Found ${entriesCopy.reduce((size, [id, results]) => size + results.length, 0)} ${type}s in ${entriesCopy.length} tags</h2>
         <table border="1">
             <thead>
                 <tr>
