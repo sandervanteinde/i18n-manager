@@ -1,5 +1,9 @@
 # Changelog
-## [0.5.1] - 2020-01-20
+## [0.5.3] - 2020-01-21
+### Fixes
+- The title was missing an interpolation marker.
+
+## [0.5.2] - 2020-01-20
 ### Changes
 - The display of the titles in the i18n manager changed to display the amount of values
 
