@@ -1,4 +1,8 @@
 # Changelog
+## [0.5.4] - 2020-01-22
+### Fixes
+- The ignoring of node_modules files of 0.5.1 is restored here.
+
 ## [0.5.3] - 2020-01-21
 ### Fixes
 - The title was missing an interpolation marker.
@@ -6,6 +10,10 @@
 ## [0.5.2] - 2020-01-20
 ### Changes
 - The display of the titles in the i18n manager changed to display the amount of values
+
+## [0.5.1] - ??
+### Added
+- Ignore node_modules HTML files.
 
 ## [0.5.0] - 2019-06-29
 ### Added

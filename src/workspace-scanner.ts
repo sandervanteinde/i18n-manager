@@ -191,6 +191,7 @@ export class WorkspaceScanner {
         workspace.findFiles('**/*.html').then(files => {
             const promises: Thenable<void>[] = [];
             files.forEach(uri => {
+                if(uri.path.indexOf('node_modules') >= 0) { return; }
                 promises.push(workspace.openTextDocument(uri).then(document => {
                     const walkerResults = this.getI18nResultsForFile(document);
                     if (walkerResults.length > 0) {
