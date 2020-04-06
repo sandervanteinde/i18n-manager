@@ -1,161 +1,161 @@
 {
-    "name": "i18n-manager",
-    "displayName": "i18n-manager",
-    "description": "Manages i18n tags that are used in HTML templates",
-    "version": "0.5.4",
-    "license": "SEE LICENSE IN LICENSE",
-    "engines": {
-        "vscode": "^1.35.0"
-    },
-    "publisher": "sandervanteinde",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/sandervanteinde/i18n-manager.git"
-    },
-    "homepage": "https://github.com/sandervanteinde/i18n-manager",
-    "categories": [
-        "Other"
+  "name": "i18n-manager",
+  "displayName": "i18n-manager",
+  "description": "Manages i18n tags that are used in HTML templates",
+  "version": "0.5.4",
+  "license": "SEE LICENSE IN LICENSE",
+  "engines": {
+    "vscode": "^1.35.0"
+  },
+  "publisher": "sandervanteinde",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sandervanteinde/i18n-manager.git"
+  },
+  "homepage": "https://github.com/sandervanteinde/i18n-manager",
+  "categories": [
+    "Other"
+  ],
+  "icon": "earth-globe.png",
+  "keywords": [
+    "i18n",
+    "angular",
+    "html",
+    "internationalization",
+    "locale",
+    "localization"
+  ],
+  "galleryBanner": {
+    "color": "#000000",
+    "theme": "dark"
+  },
+  "activationEvents": [
+    "onCommand:extension.i18n-manager",
+    "onLanguage:html"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.i18n-manager",
+        "title": "Open i18n manager"
+      }
     ],
-    "icon": "earth-globe.png",
-    "keywords": [
-        "i18n",
-        "angular",
-        "html",
-        "internationalization",
-        "locale",
-        "localization"
-    ],
-    "galleryBanner": {
-        "color": "#000000",
-        "theme": "dark"
-    },
-    "activationEvents": [
-        "onCommand:extension.i18n-manager",
-        "onLanguage:html"
-    ],
-    "main": "./out/extension.js",
-    "contributes": {
-        "commands": [
-            {
-                "command": "extension.i18n-manager",
-                "title": "Open i18n manager"
-            }
-        ],
-        "configuration": {
-            "type": "object",
-            "title": "i18n manager configuration",
-            "properties": {
-                "sandervanteinde.i18n-manager.validators.idMustMatchRegex.enabled": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Must an i18n tag have an id that must match the given pattern"
-                },
-                "sandervanteinde.i18n-manager.validators.idMustMatchRegex.pattern": {
-                    "type": "string",
-                    "default": "^.+$",
-                    "description": "The pattern that the i18n tag must match to if ID must match regex is enabled"
-                },
-                "sandervanteinde.i18n-manager.validators.idMustMatchRegex.level": {
-                    "type": "string",
-                    "enum": [
-                        "warning",
-                        "error"
-                    ],
-                    "default": "warning"
-                },
-                "sandervanteinde.i18n-manager.validators.duplicateValues.enabled": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Checks if there are multiple ids with the same value"
-                },
-                "sandervanteinde.i18n-manager.validators.duplicateValues.level": {
-                    "type": "string",
-                    "enum": [
-                        "warning",
-                        "error"
-                    ],
-                    "default": "warning"
-                },
-                "sandervanteinde.i18n-manager.validators.warnForHtmlTags.enabled": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Mark i18n content as invalid if it contains HTML Tags"
-                },
-                "sandervanteinde.i18n-manager.validators.warnForHtmlTags.level": {
-                    "type": "string",
-                    "enum": [
-                        "warning",
-                        "error"
-                    ],
-                    "default": "warning"
-                },
-                "sandervanteinde.i18n-manager.validators.warnForInterpolations.enabled": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Mark i18n content as invalid if it contains interpolations"
-                },
-                "sandervanteinde.i18n-manager.validators.warnForInterpolations.level": {
-                    "type": "string",
-                    "enum": [
-                        "warning",
-                        "error"
-                    ],
-                    "default": "warning"
-                },
-                "sandervanteinde.i18n-manager.validators.mismatchingValues.enabled": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Validate if an i18n id has any matching i18n ids with different values"
-                },
-                "sandervanteinde.i18n-manager.validators.mismatchingValues.level": {
-                    "type": "string",
-                    "enum": [
-                        "warning",
-                        "error"
-                    ],
-                    "default": "error"
-                },
-                "sandervanteinde.i18n-manager.notifications.enabled": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Show global notifications when errors or warnings are found in your project"
-                },
-                "sandervanteinde.i18n-manager.notifications.minimumLevel": {
-                    "type": "string",
-                    "enum": [
-                        "warning",
-                        "error"
-                    ],
-                    "default": "error"
-                },
-                "sandervanteinde.i18n-manager.language.i18nHtmlAutoCompletion": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Adds auto completion to HTML when in an i18n tag"
-                }
-            }
+    "configuration": {
+      "type": "object",
+      "title": "i18n manager configuration",
+      "properties": {
+        "sandervanteinde.i18n-manager.validators.idMustMatchRegex.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Must an i18n tag have an id that must match the given pattern"
+        },
+        "sandervanteinde.i18n-manager.validators.idMustMatchRegex.pattern": {
+          "type": "string",
+          "default": "^.+$",
+          "description": "The pattern that the i18n tag must match to if ID must match regex is enabled"
+        },
+        "sandervanteinde.i18n-manager.validators.idMustMatchRegex.level": {
+          "type": "string",
+          "enum": [
+            "warning",
+            "error"
+          ],
+          "default": "warning"
+        },
+        "sandervanteinde.i18n-manager.validators.duplicateValues.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Checks if there are multiple ids with the same value"
+        },
+        "sandervanteinde.i18n-manager.validators.duplicateValues.level": {
+          "type": "string",
+          "enum": [
+            "warning",
+            "error"
+          ],
+          "default": "warning"
+        },
+        "sandervanteinde.i18n-manager.validators.warnForHtmlTags.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Mark i18n content as invalid if it contains HTML Tags"
+        },
+        "sandervanteinde.i18n-manager.validators.warnForHtmlTags.level": {
+          "type": "string",
+          "enum": [
+            "warning",
+            "error"
+          ],
+          "default": "warning"
+        },
+        "sandervanteinde.i18n-manager.validators.warnForInterpolations.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Mark i18n content as invalid if it contains interpolations"
+        },
+        "sandervanteinde.i18n-manager.validators.warnForInterpolations.level": {
+          "type": "string",
+          "enum": [
+            "warning",
+            "error"
+          ],
+          "default": "warning"
+        },
+        "sandervanteinde.i18n-manager.validators.mismatchingValues.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Validate if an i18n id has any matching i18n ids with different values"
+        },
+        "sandervanteinde.i18n-manager.validators.mismatchingValues.level": {
+          "type": "string",
+          "enum": [
+            "warning",
+            "error"
+          ],
+          "default": "error"
+        },
+        "sandervanteinde.i18n-manager.notifications.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show global notifications when errors or warnings are found in your project"
+        },
+        "sandervanteinde.i18n-manager.notifications.minimumLevel": {
+          "type": "string",
+          "enum": [
+            "warning",
+            "error"
+          ],
+          "default": "error"
+        },
+        "sandervanteinde.i18n-manager.language.i18nHtmlAutoCompletion": {
+          "type": "boolean",
+          "default": true,
+          "description": "Adds auto completion to HTML when in an i18n tag"
         }
-    },
-    "scripts": {
-        "vscode:prepublish": "webpack --mode production",
-        "compile": "webpack --mode none",
-        "watch": "webpack --mode none --watch",
-        "postinstall": "node ./node_modules/vscode/bin/install",
-        "test": "npm run compile && node ./node_modules/vscode/bin/test",
-        "test-compile": "tsc -p ./"
-    },
-    "devDependencies": {
-        "@types/mocha": "^2.2.42",
-        "@types/node": "^10.12.21",
-        "ts-loader": "^6.0.3",
-        "tslint": "^5.12.1",
-        "typescript": "^3.3.1",
-        "vscode": "^1.1.28",
-        "webpack": "^4.35.0",
-        "webpack-cli": "^3.3.5"
-    },
-    "dependencies": {
-        "@angular/compiler": "^8.0.2",
-        "rxjs": "^6.5.2"
+      }
     }
+  },
+  "scripts": {
+    "vscode:prepublish": "webpack --mode production",
+    "compile": "webpack --mode none",
+    "watch": "webpack --mode none --watch",
+    "test": "node ./out/test/runTest.js",
+    "test-compile": "tsc -p ./"
+  },
+  "devDependencies": {
+    "@types/mocha": "^2.2.42",
+    "@types/node": "^10.12.21",
+    "@types/vscode": "1.35.0",
+    "ts-loader": "^6.0.3",
+    "tslint": "^5.12.1",
+    "typescript": "^3.3.1",
+    "vscode-test": "^1.3.0",
+    "webpack": "^4.35.0",
+    "webpack-cli": "^3.3.5"
+  },
+  "dependencies": {
+    "@angular/compiler": "^8.0.2",
+    "rxjs": "^6.5.2"
+  }
 }
