@@ -1,4 +1,8 @@
 # Changelog
+## [0.6.0] - 2020-07-07
+### Added
+- Search i18n command
+
 ## [0.5.4] - 2020-01-22
 ### Fixes
 - The ignoring of node_modules files of 0.5.1 is restored here.

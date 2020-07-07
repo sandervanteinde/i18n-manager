@@ -7,6 +7,8 @@ Manage your i18n tags in a more user friendly way!
 This extension gives you a webview that monitors all your i18n tags in your application.
 You can access this webview by opening the command `>Open i18n manager`
 
+You are also able to browse your i18n tags by using `>Search i18n`
+
 ## Fixers
 The i18n-manager also includes auto-fixers. These fixers can be accessed through the i18n manager as described above.
 
