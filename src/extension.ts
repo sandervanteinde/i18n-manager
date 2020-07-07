@@ -7,6 +7,7 @@ import { GlobalNotifications } from './global-notifications';
 import { Configuration } from './configuration';
 import { CompletionProvider } from './completion-provider';
 import { searchQuickPick } from './quick-picks/search-quick-pick';
+import { I18nDataProvider } from './view/i18n-data-provider';
 
 let panel: WebviewPanel | undefined = undefined;
 let wrapper: ManagerView | undefined = undefined;
@@ -41,12 +42,16 @@ export function activate(context: ExtensionContext) {
 
     WorkspaceScanner.instance.initialize(context);
 
-    context.subscriptions.push(i18nCommand, i18nSearchCommand);
-
+    
     GlobalNotifications.activate(context);
-
+    
     CompletionProvider.initialize(context);
-
+    
+    const treeProvider = new I18nDataProvider();
+    const treeDataProvider = window.registerTreeDataProvider('i18n-manager-view', treeProvider);
+    window.createTreeView('i18n-manager-view', { treeDataProvider: treeProvider});
+    const treeProviderListener = treeProvider.listenForUpdates();    
+    context.subscriptions.push(i18nCommand, i18nSearchCommand, treeDataProvider, treeProviderListener);
     console.log('[i18n-manager] Started extension');
 }
 

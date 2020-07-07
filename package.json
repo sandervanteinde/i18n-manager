@@ -32,10 +32,29 @@
   "activationEvents": [
     "onCommand:extension.i18n-manager",
     "onCommand:extension.i18n-manager-search",
-    "onLanguage:html"
+    "onLanguage:html",
+    "onView:i18nTree"
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "i18n-manager-view",
+          "icon": "globe.svg",
+          "title": "Test"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "i18n-manager-view",
+          "icon": "globe.svg",
+          "name": "i18n Manager View"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "extension.i18n-manager",
