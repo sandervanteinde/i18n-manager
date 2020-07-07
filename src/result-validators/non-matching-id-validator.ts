@@ -56,7 +56,7 @@ export class NonMatchingIdValidator implements IdResultValidator {
                         if (inputValue) {
                             doReplace(inputValue);
                         }
-                    })
+                    });
                 } else {
                     doReplace(newValue);
                 }

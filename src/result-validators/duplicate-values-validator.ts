@@ -48,9 +48,9 @@ export class DuplicateValuesValidator implements EntryResultValidator {
                         let uri = Uri.parse(files);
                         replaceI18nIdsById(uri, replace.id, replaceWith.id);
                     }
-                })
+                });
             }
-        }
+        };
     }
 
     cleanup() {

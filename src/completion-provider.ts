@@ -1,6 +1,5 @@
 import { ExtensionContext, languages, CompletionItem, TextDocument, Position, MarkdownString, TextEdit, Range, CompletionList, CompletionItemKind } from "vscode";
 import { Configuration } from "./configuration";
-import { timer } from "rxjs";
 import { WorkspaceScanner, WalkerByIdResult } from "./workspace-scanner";
 import { map, distinctUntilChanged, first, race } from "rxjs/operators";
 import { ParseTreeResult, Attribute, Element } from "@angular/compiler";
@@ -149,7 +148,7 @@ export class CompletionProvider {
                 return {
                     element,
                     attribute
-                }
+                };
             }
         }
         return false;
