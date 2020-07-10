@@ -30,18 +30,20 @@ type AllTreeItems = I18nItem | LabelItem | GroupingItem | CopyValueItem;
 
 
 export class I18nTreeItem extends TreeItem {
-  constructor(id: string, private readonly _count: number) { 
+  readonly #count: number;
+  constructor(id: string, count: number) { 
     super(id, TreeItemCollapsibleState.Collapsed);
+    this.#count = count;
   }
 
   get description(): string { 
-    return `${this._count} time${this._count > 1 ? 's' : ''} used`;
+    return `${this.#count} time${this.#count > 1 ? 's' : ''} used`;
   }
 }
 
 export class I18nDataProvider implements TreeDataProvider<AllTreeItems> {
-  private readonly _onDidChangeTreeData = new EventEmitter<void | AllTreeItems | undefined | null>();
-  readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
+  #onDidChangeTreeData = new EventEmitter<void | AllTreeItems | undefined | null>();
+  readonly onDidChangeTreeData = this.#onDidChangeTreeData.event;
   get scanner() { return WorkspaceScanner.instance; }
 
   getTreeItem(element: AllTreeItems): TreeItem | Thenable<TreeItem> {
@@ -80,7 +82,7 @@ export class I18nDataProvider implements TreeDataProvider<AllTreeItems> {
   }
 
   listenForUpdates(): Disposable {
-    const unsubscribe = this.scanner.resultsById$.subscribe(() => this._onDidChangeTreeData.fire(undefined));
+    const unsubscribe = this.scanner.resultsById$.subscribe(() => this.#onDidChangeTreeData.fire(undefined));
     return Disposable.from({ dispose: () => unsubscribe.unsubscribe() });
   }
 

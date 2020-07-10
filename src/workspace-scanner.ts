@@ -24,19 +24,19 @@ export class WorkspaceScanner {
     }
 
 
-    private _resultsByFile$ = new ReplaySubject<ReadonlyMap<string, WalkerResult[]>>(1);
-    private _resultsById$ = new ReplaySubject<ReadonlyMap<string, WalkerByIdResult[]>>(1);
+    #resultsByFile$ = new ReplaySubject<ReadonlyMap<string, WalkerResult[]>>(1);
+    #resultsById$ = new ReplaySubject<ReadonlyMap<string, WalkerByIdResult[]>>(1);
 
-    private _resultsByFile: ReadonlyMap<string, WalkerResult[]> | undefined;
-    private _resultsById: ReadonlyMap<string, WalkerByIdResult[]> | undefined;
+    #resultsByFile: ReadonlyMap<string, WalkerResult[]> | undefined;
+    #resultsById: ReadonlyMap<string, WalkerByIdResult[]> | undefined;
 
-    private _state: 'uninitialized' | 'initializing' | 'initialized' = 'uninitialized';
-    private _onDestroy$ = new Subject<void>();
+    #state: 'uninitialized' | 'initializing' | 'initialized' = 'uninitialized';
+    #onDestroy$ = new Subject<void>();
 
-    readonly resultsByFile$ = this._resultsByFile$.asObservable();
-    readonly resultsById$ = this._resultsById$.asObservable();
+    readonly resultsByFile$ = this.#resultsByFile$.asObservable();
+    readonly resultsById$ = this.#resultsById$.asObservable();
 
-    readonly validatedResultsById$ = this._resultsById$.pipe(
+    readonly validatedResultsById$ = this.#resultsById$.pipe(
         combineLatestOp(Configuration.instance.validatorConfiguration$),
         map(([res, config]) => {
             const { idValidators, entryValidators, validators } = this.getValidatorsByConfig(config);
@@ -74,29 +74,29 @@ export class WorkspaceScanner {
             return copy as ReadonlyMap<string, WalkerByIdResult[]>;
         }),
         shareReplay(1),
-        takeUntil(this._onDestroy$)
+        takeUntil(this.#onDestroy$)
     );
 
-    get initialized(): boolean { return this._state === 'initialized'; }
+    get initialized(): boolean { return this.#state === 'initialized'; }
 
     private constructor() {
-        this.resultsByFile$.pipe(takeUntil(this._onDestroy$)).subscribe(res => this._resultsByFile = res);
-        this.resultsById$.pipe(takeUntil(this._onDestroy$)).subscribe(res => this._resultsById = res);
+        this.resultsByFile$.pipe(takeUntil(this.#onDestroy$)).subscribe(res => this.#resultsByFile = res);
+        this.resultsById$.pipe(takeUntil(this.#onDestroy$)).subscribe(res => this.#resultsById = res);
     }
 
     private onDocumentSave(document: TextDocument): void {
         if (!document.uri.path.endsWith('.html')) { return; }
         // we didn't initialize for some reason?
-        if (!this._resultsByFile || !this._resultsById) { return console.error('[i18n-manager] We were not able to handle a saved document'); }
+        if (!this.#resultsByFile || !this.#resultsById) { return console.error('[i18n-manager] We were not able to handle a saved document'); }
 
         const results = this.getI18nResultsForFile(document);
-        var newFileMap = new Map<string, WalkerResult[]>(this._resultsByFile);
+        var newFileMap = new Map<string, WalkerResult[]>(this.#resultsByFile);
         newFileMap.set(document.uri.toString(), results);
 
-        const newIdMap = new Map<string, WalkerByIdResult[]>(this._resultsById);
+        const newIdMap = new Map<string, WalkerByIdResult[]>(this.#resultsById);
 
         // remove old id maps
-        const oldRegistry = this._resultsByFile.get(document.uri.toString());
+        const oldRegistry = this.#resultsByFile.get(document.uri.toString());
         if (oldRegistry) {
             oldRegistry.forEach(res => {
                 const entry = newIdMap.get(res.id);
@@ -120,26 +120,26 @@ export class WorkspaceScanner {
             newIdMap.set(res.id, entry);
         });
 
-        this._resultsByFile$.next(newFileMap);
-        this._resultsById$.next(newIdMap);
+        this.#resultsByFile$.next(newFileMap);
+        this.#resultsById$.next(newIdMap);
     }
 
     private registerEvents(context: ExtensionContext): void {
         const savedDocumentSubject = new Subject<TextDocument>();
         const disposable = workspace.onDidSaveTextDocument(doc => {
-            if (this._state === 'initialized') {
+            if (this.#state === 'initialized') {
                 savedDocumentSubject.next(doc);
             } else {
                 let interval: undefined | NodeJS.Timeout;
                 interval = setInterval(() => {
-                    if (this._state === 'initialized') {
+                    if (this.#state === 'initialized') {
                         savedDocumentSubject.next(doc);
                         if (interval) { clearInterval(interval); }
                     }
                 }, 1000);
             }
         });
-        savedDocumentSubject.pipe(takeUntil(this._onDestroy$)).subscribe(savedTextDocument => this.onDocumentSave(savedTextDocument));
+        savedDocumentSubject.pipe(takeUntil(this.#onDestroy$)).subscribe(savedTextDocument => this.onDocumentSave(savedTextDocument));
 
         context.subscriptions.push(disposable);
     }
@@ -177,12 +177,12 @@ export class WorkspaceScanner {
     }
 
     initialize(context: ExtensionContext): Observable<void> {
-        if (this._state !== 'uninitialized') {
+        if (this.#state !== 'uninitialized') {
             return of(undefined);
         }
         console.log('[i18n-manager] initializing i18n repository');
         this.registerEvents(context);
-        this._state = 'initializing';
+        this.#state = 'initializing';
 
         const resultByFileName = new Map<string, WalkerResult[]>();
         const resultById = new Map<string, WalkerByIdResult[]>();
@@ -207,9 +207,9 @@ export class WorkspaceScanner {
             });
 
             Promise.all(promises).then(() => {
-                this._state = 'initialized';
-                this._resultsByFile$.next(resultByFileName);
-                this._resultsById$.next(resultById);
+                this.#state = 'initialized';
+                this.#resultsByFile$.next(resultByFileName);
+                this.#resultsById$.next(resultById);
                 finalizeSubject$.next();
                 finalizeSubject$.complete();
                 console.log('[i18n-manager] initialized i18n repository');
@@ -224,10 +224,10 @@ export class WorkspaceScanner {
         if (!this._instance) {
             return;
         }
-        this.instance._resultsByFile$.complete();
-        this.instance._resultsById$.complete();
-        this.instance._onDestroy$.next();
-        this.instance._onDestroy$.complete();
+        this._instance.#resultsByFile$.complete();
+        this._instance.#resultsById$.complete();
+        this._instance.#onDestroy$.next();
+        this._instance.#onDestroy$.complete();
         this._instance = undefined;
     }
 }

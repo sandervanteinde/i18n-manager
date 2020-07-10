@@ -7,7 +7,10 @@ import { window, Uri } from 'vscode';
 import { replaceI18nValuesById } from '../utils';
 
 export class NonMatchingIdValidator implements IdResultValidator {
-    constructor(private _level: ValidatorLevel) { }
+    #level: ValidatorLevel;
+    constructor(level: ValidatorLevel) {
+        this.#level = level;
+    }
 
     validate(context: ResultValidatorContext): void {
         const { results } = context;
@@ -19,7 +22,7 @@ export class NonMatchingIdValidator implements IdResultValidator {
             for (let i = 0; i < values.length; i++) {
                 results[i] = {
                     ...results[i],
-                    state: this._level,
+                    state: this.#level,
                     message: 'There are other items registered with this ID whose value do not match!',
                     fixer: {
                         getFixButtons: fixButtons,

@@ -5,22 +5,24 @@ import { Subject } from 'rxjs';
 import { navigateToi18nTagInFile, createUrl, navigateToi18nContentsInFile } from './utils';
 
 export class ManagerView {
-    private _scanner = WorkspaceScanner.instance;
-    private _onDestroy$ = new Subject<void>();
-    private _dirty = false;
+    #scanner = WorkspaceScanner.instance;
+    #onDestroy$ = new Subject<void>();
+    #dirty = false;
 
-    private _fixButtonPressed$ = new Subject<{ id: string, buttonId: string, index: number }>();
+    #fixButtonPressed$ = new Subject<{ id: string, buttonId: string, index: number }>();
+    #panel: WebviewPanel;
 
     errorResults = new Map<string, WalkerByIdResult[]>();
     warningResults = new Map<string, WalkerByIdResult[]>();
     successResults = new Map<string, WalkerByIdResult[]>();
 
-    constructor(private _panel: WebviewPanel) {
-        _panel.webview.options = {
-            ..._panel.webview.options,
+    constructor(panel: WebviewPanel) {
+        this.#panel = panel;
+        panel.webview.options = {
+            ...panel.webview.options,
             enableScripts: true
         };
-        _panel.webview.onDidReceiveMessage(message => {
+        panel.webview.onDidReceiveMessage(message => {
             let uri: Uri;
             switch (message.command) {
                 case 'navigateToId':
@@ -36,13 +38,13 @@ export class ManagerView {
                     window.showInformationMessage(`Copied text '${message.text}' to the clipboard`);
                     break;
                 case 'fix':
-                    this._fixButtonPressed$.next({ id: message.id, buttonId: message.buttonId, index: message.index });
+                    this.#fixButtonPressed$.next({ id: message.id, buttonId: message.buttonId, index: message.index });
                     break;
             }
         });
-        _panel.onDidChangeViewState(state => {
-            if (state.webviewPanel.active && this._dirty) {
-                this._dirty = false;
+        panel.onDidChangeViewState(state => {
+            if (state.webviewPanel.active && this.#dirty) {
+                this.#dirty = false;
                 this.render();
             }
         });
@@ -59,8 +61,8 @@ export class ManagerView {
 
     initialize(): void {
         this.render();
-        this._scanner.validatedResultsById$
-            .pipe(takeUntil(this._onDestroy$))
+        this.#scanner.validatedResultsById$
+            .pipe(takeUntil(this.#onDestroy$))
             .subscribe(resultById => {
                 this.errorResults.clear();
                 this.warningResults.clear();
@@ -74,8 +76,8 @@ export class ManagerView {
                 });
                 this.render();
             });
-        this._fixButtonPressed$.pipe(
-            withLatestFrom(this._scanner.validatedResultsById$),
+        this.#fixButtonPressed$.pipe(
+            withLatestFrom(this.#scanner.validatedResultsById$),
             map(([buttonData, validationResult]) => ({ ...buttonData, validationResult }))
         ).subscribe(data => {
             const results = data.validationResult.get(data.id);
@@ -188,11 +190,11 @@ export class ManagerView {
     }
 
     private render(): void {
-        if (!this._panel.visible) {
-            this._dirty = true;
+        if (!this.#panel.visible) {
+            this.#dirty = true;
             return;
         }
-        this._panel.webview.html = `<!DOCTYPE html>
+        this.#panel.webview.html = `<!DOCTYPE html>
         <html lang="en">
             <head>
                 <meta charset="UTF-8">
@@ -325,7 +327,7 @@ export class ManagerView {
     }
 
     deactivate() {
-        this._onDestroy$.next();
-        this._onDestroy$.complete();
+        this.#onDestroy$.next();
+        this.#onDestroy$.complete();
     }
 }

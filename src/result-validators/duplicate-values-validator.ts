@@ -7,8 +7,11 @@ import { Uri, window } from 'vscode';
 
 export class DuplicateValuesValidator implements EntryResultValidator {
     foundValues = new Map<string, WalkerByIdResult>();
+    #level: ValidatorLevel;
 
-    constructor(private _level: ValidatorLevel) { }
+    constructor(level: ValidatorLevel) {
+        this.#level = level;
+     }
 
     validate(result: WalkerByIdResult): WalkerByIdResult {
         if (!result.value) {
@@ -18,7 +21,7 @@ export class DuplicateValuesValidator implements EntryResultValidator {
         if (existingEntry && existingEntry.id !== result.id) {
             return {
                 ...result,
-                state: this._level,
+                state: this.#level,
                 message: `The translation with ID has the same value as <strong>${createUrl(existingEntry, res => res.id)}</strong>`,
                 fixer: this.createFixer(result, existingEntry)
             };

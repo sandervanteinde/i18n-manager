@@ -30,12 +30,12 @@ export class GlobalNotifications {
             });
         });
     }
-    private _enabled: boolean = false;
-    private _warningSubject$ = new Subject<number>();
-    private _errorSubject$ = new Subject<number>();
-    private _destroy$ = new Subject<void>();
-    private _lastValue: ReadonlyMap<string, WalkerByIdResult[]> | undefined;
-    private _onEnableValue$ = new Subject<ReadonlyMap<string, WalkerByIdResult[]>>();
+    #enabled: boolean = false;
+    #warningSubject$ = new Subject<number>();
+    #errorSubject$ = new Subject<number>();
+    #destroy$ = new Subject<void>();
+    #lastValue: ReadonlyMap<string, WalkerByIdResult[]> | undefined;
+    #onEnableValue$ = new Subject<ReadonlyMap<string, WalkerByIdResult[]>>();
     start() {
         const callback = (val: string | undefined) => {
             if (val) {
@@ -45,15 +45,15 @@ export class GlobalNotifications {
 
         merge(
             WorkspaceScanner.instance.validatedResultsById$,
-            this._onEnableValue$
+            this.#onEnableValue$
         ).pipe(
             tap(val => {
-                if (!this._enabled) {
-                    this._lastValue = val;
+                if (!this.#enabled) {
+                    this.#lastValue = val;
                 }
             }),
-            filter(() => this._enabled),
-            takeUntil(this._destroy$)
+            filter(() => this.#enabled),
+            takeUntil(this.#destroy$)
         ).subscribe(res => {
             let warningCount = 0;
             let errorCount = 0;
@@ -71,19 +71,19 @@ export class GlobalNotifications {
                 });
             });
 
-            this._warningSubject$.next(warningCount);
-            this._errorSubject$.next(errorCount);
+            this.#warningSubject$.next(warningCount);
+            this.#errorSubject$.next(errorCount);
         });
 
         combineLatest(
-            this._warningSubject$.pipe(distinctUntilChanged()),
-            this._errorSubject$.pipe(distinctUntilChanged()),
+            this.#warningSubject$.pipe(distinctUntilChanged()),
+            this.#errorSubject$.pipe(distinctUntilChanged()),
             Configuration.instance.notificationsConfiguration$.pipe(map(x => x.minimumLevel), distinctUntilChanged())
         ).pipe(
             map(([warning, error, minimumLevel]) => ({ warning, error, minimumLevel })),
             skipWhile(({ warning, error, minimumLevel }) => minimumLevel === 'warning' ? warning + error === 0 : error === 0),
-            filter(() => this._enabled),
-            takeUntil(this._destroy$)
+            filter(() => this.#enabled),
+            takeUntil(this.#destroy$)
         ).subscribe(({ warning, error, minimumLevel }) => {
             if (warning > 0 && error > 0 && minimumLevel === 'warning') {
                 window.showErrorMessage(`[i18n-manager]: There are ${error} errors and ${warning} warnings`, 'Open i18n manager').then(callback);
@@ -98,23 +98,23 @@ export class GlobalNotifications {
     }
 
     stop() {
-        this._errorSubject$.complete();
-        this._warningSubject$.complete();
-        this._destroy$.next();
-        this._destroy$.complete();
+        this.#errorSubject$.complete();
+        this.#warningSubject$.complete();
+        this.#destroy$.next();
+        this.#destroy$.complete();
     }
 
     enable() {
-        this._enabled = true;
-        if (this._lastValue) {
-            this._onEnableValue$.next(this._lastValue);
-            this._lastValue = undefined;
+        this.#enabled = true;
+        if (this.#lastValue) {
+            this.#onEnableValue$.next(this.#lastValue);
+            this.#lastValue = undefined;
         }
     }
 
     disable() {
-        this._enabled = false;
-        this._errorSubject$.next(0);
-        this._warningSubject$.next(0);
+        this.#enabled = false;
+        this.#errorSubject$.next(0);
+        this.#warningSubject$.next(0);
     }
 }

@@ -23,8 +23,9 @@ interface WalkerErrorResult extends WalkerFailResult {
 export type WalkerResult = WalkerSuccessResult | WalkerErrorResult;
 
 export class Walker {
-    constructor(private _root: ParseTreeResult) {
-
+    #root: ParseTreeResult;
+    constructor(root: ParseTreeResult) {
+        this.#root = root;
     }
 
     private toStringElement(element: Element): string {
@@ -64,7 +65,7 @@ export class Walker {
     geti18nAttributes(): Array<WalkerResult> {
         const res: Array<WalkerResult> = [];
 
-        for (var element of iterateTreeResult(this._root)) {
+        for (var element of iterateTreeResult(this.#root)) {
             if (element instanceof Element) {
                 for (let attr of element.attrs) {
                     const match = i18nMatchPattern.exec(attr.name);

@@ -5,12 +5,15 @@ import { Element, Text } from '@angular/compiler';
 import { replaceI18nValuesById } from '../utils';
 
 export class HtmlTagsValidator implements EntryResultValidator {
-    constructor(private _level: ValidatorLevel) { }
+    #level: ValidatorLevel;
+    constructor(level: ValidatorLevel) { 
+        this.#level = level;
+    }
     validate(entry: WalkerByIdResult): WalkerByIdResult {
         if (!entry.attribute && entry.element.children.some(x => x instanceof Element)) {
             return {
                 ...entry,
-                state: this._level,
+                state: this.#level,
                 message: 'This translation contains HTML tag. This is not recommended!',
                 fixer: {
                     getFixButtons: () => [{ label: 'Remove HTML', id: 'remove-html' }],

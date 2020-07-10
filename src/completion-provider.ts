@@ -6,8 +6,8 @@ import { ParseTreeResult, Attribute, Element } from "@angular/compiler";
 import { toTokens, findNodeAtLocation, isPositionBetweenSpans } from "./utils";
 
 export class CompletionProvider {
-    private _dispose: (() => void) | undefined;
-    private _tokenedOpenDocument: ParseTreeResult | undefined = undefined;
+    #dispose: (() => void) | undefined;
+    #tokenedOpenDocument: ParseTreeResult | undefined = undefined;
     private constructor(_context: ExtensionContext) {
         const subscription = Configuration.instance.languageConfiguration$.pipe(
             map(x => x.i18nHtmlAutoCompletion),
@@ -23,8 +23,8 @@ export class CompletionProvider {
         _context.subscriptions.push({
             dispose: () => {
                 subscription.unsubscribe();
-                if (this._dispose) {
-                    this._dispose();
+                if (this.#dispose) {
+                    this.#dispose();
                 }
             }
         });
@@ -45,7 +45,7 @@ export class CompletionProvider {
     }
 
     private tokenizeDocument(document: TextDocument) {
-        this._tokenedOpenDocument = toTokens(document);
+        this.#tokenedOpenDocument = toTokens(document);
     }
 
     private createCompletionItem({ element, attribute }: { element: Element, attribute: Attribute }, id: string, results: WalkerByIdResult[], searchString: string): CompletionItem | void {
@@ -114,7 +114,7 @@ export class CompletionProvider {
                 return new CompletionList(completionItems, false);
             }
         });
-        this._dispose = () => {
+        this.#dispose = () => {
             codeCompletionProvider.dispose();
         };
 
@@ -122,18 +122,18 @@ export class CompletionProvider {
     }
 
     private stop() {
-        if (this._dispose) {
-            this._dispose();
+        if (this.#dispose) {
+            this.#dispose();
         }
         console.log('[i18n-manager] completion provider stopped');
     }
 
     private isInI18nTag(position: Position): { element: Element, attribute: Attribute } | false {
-        if (!this._tokenedOpenDocument) {
+        if (!this.#tokenedOpenDocument) {
             return false;
         }
 
-        const element = findNodeAtLocation(this._tokenedOpenDocument, position);
+        const element = findNodeAtLocation(this.#tokenedOpenDocument, position);
 
         if (!(element instanceof Element) || element.attrs.length === 0) {
             return false;

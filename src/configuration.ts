@@ -47,14 +47,14 @@ export class Configuration {
         this._instance = new Configuration(context);
     }
 
-    private _validatorConfiguration$ = new ReplaySubject<Readonly<ValidatorConfiguration>>(1);
-    validatorConfiguration$ = this._validatorConfiguration$.asObservable();
+    #validatorConfiguration$ = new ReplaySubject<Readonly<ValidatorConfiguration>>(1);
+    validatorConfiguration$ = this.#validatorConfiguration$.asObservable();
 
-    private _notificationsConfiguration$ = new ReplaySubject<Readonly<NotificationConfiguration>>(1);
-    notificationsConfiguration$ = this._notificationsConfiguration$.asObservable();
+    #notificationsConfiguration$ = new ReplaySubject<Readonly<NotificationConfiguration>>(1);
+    notificationsConfiguration$ = this.#notificationsConfiguration$.asObservable();
 
-    private _languageConfiguration$ = new ReplaySubject<Readonly<LanguageConfiguration>>(1);
-    languageConfiguration$ = this._languageConfiguration$.asObservable();
+    #languageConfiguration$ = new ReplaySubject<Readonly<LanguageConfiguration>>(1);
+    languageConfiguration$ = this.#languageConfiguration$.asObservable();
 
     constructor(context: ExtensionContext) {
         const disposable = workspace.onDidChangeConfiguration(ev => this.onConfigurationChanged(ev));
@@ -102,7 +102,7 @@ export class Configuration {
                 level: config.get<ValidatorLevel>('warnForInterpolations.level', 'warning')
             }
         };
-        this._validatorConfiguration$.next(validators);
+        this.#validatorConfiguration$.next(validators);
     }
 
     private pushNewNotificationsConfiguration(): void {
@@ -113,7 +113,7 @@ export class Configuration {
             minimumLevel: config.get<ValidatorLevel>('minimumLevel', 'warning')
         };
 
-        this._notificationsConfiguration$.next(notifications);
+        this.#notificationsConfiguration$.next(notifications);
     }
 
     private pushNewLanguageConfiguration(): void {
@@ -122,7 +122,7 @@ export class Configuration {
             i18nHtmlAutoCompletion: config.get<boolean>('i18nHtmlAutoCompletion', true)
         };
 
-        this._languageConfiguration$.next(language);
+        this.#languageConfiguration$.next(language);
     }
 
 }
