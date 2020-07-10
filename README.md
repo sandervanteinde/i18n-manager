@@ -9,6 +9,8 @@ You can access this webview by opening the command `>Open i18n manager`
 
 You are also able to browse your i18n tags by using `>Search i18n`
 
+A tree view is also available. This does not yet support all functions in i18n-manager, but the intention is that it will replace the old web view.
+
 ## Fixers
 The i18n-manager also includes auto-fixers. These fixers can be accessed through the i18n manager as described above.
 

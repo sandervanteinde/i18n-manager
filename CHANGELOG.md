@@ -1,4 +1,8 @@
 # Changelog
+## [0.6.1] - 2020-07-07
+### Added
+- Initial tree view implementation of i18n. Accessibly in the Activity Bar.
+
 ## [0.6.0] - 2020-07-07
 ### Added
 - Search i18n command
