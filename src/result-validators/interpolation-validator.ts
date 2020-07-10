@@ -1,7 +1,6 @@
 import { EntryResultValidator } from './result-validator';
 import { WalkerByIdResult } from '../workspace-scanner';
 import { ValidatorLevel } from '../configuration';
-import { Element } from '@angular/compiler';
 
 export class InterpolationValidator implements EntryResultValidator {
     #level: ValidatorLevel;

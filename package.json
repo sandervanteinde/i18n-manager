@@ -16,7 +16,7 @@
   "categories": [
     "Other"
   ],
-  "icon": "earth-globe.png",
+  "icon": "resources/earth-globe.png",
   "keywords": [
     "i18n",
     "angular",
@@ -33,16 +33,16 @@
     "onCommand:extension.i18n-manager",
     "onCommand:extension.i18n-manager-search",
     "onLanguage:html",
-    "onView:i18nTree"
+    "onView:i18n-manager-view"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {
-      "activitybar": [
+      "activityBar": [
         {
           "id": "i18n-manager-view",
-          "icon": "globe.svg",
-          "title": "Test"
+          "icon": "resources/globe.svg",
+          "title": "i18n Manager View"
         }
       ]
     },
@@ -50,8 +50,22 @@
       "explorer": [
         {
           "id": "i18n-manager-view",
-          "icon": "globe.svg",
+          "icon": "resources/globe.svg",
           "name": "i18n Manager View"
+        }
+      ]
+    },
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "i18n-manager-view.copyIdToClipboard",
+          "when": "view == i18n-manager-view && viewItem == tag",
+          "group": "inline"
+        },
+        {
+          "command": "i18n-manager-view.goToUsage",
+          "when": "view == i18n-manager-view && viewItem == value",
+          "group": "inline"
         }
       ]
     },
@@ -63,6 +77,22 @@
       {
         "command": "extension.i18n-manager-search",
         "title": "Search i18n"
+      },
+      {
+        "command": "i18n-manager-view.copyIdToClipboard",
+        "title": "Copy ID",
+        "icon": {
+          "dark": "resources/hash-dark.svg",
+          "light": "resources/hash-light.svg"
+        }
+      },
+      {
+        "command": "i18n-manager-view.goToUsage",
+        "title": "Go to usage",
+        "icon": {
+          "dark": "resources/open-file-dark.svg",
+          "light": "resources/open-file-light.svg"
+        }
       }
     ],
     "configuration": {

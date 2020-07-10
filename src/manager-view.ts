@@ -3,6 +3,7 @@ import { WorkspaceScanner, WalkerByIdResult } from './workspace-scanner';
 import { takeUntil, withLatestFrom, map } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { navigateToi18nTagInFile, createUrl, navigateToi18nContentsInFile } from './utils';
+import { Clipboard } from './utils/clipboard';
 
 export class ManagerView {
     #scanner = WorkspaceScanner.instance;
@@ -34,8 +35,7 @@ export class ManagerView {
                     navigateToi18nContentsInFile(uri, message.id, Number(message.occassion));
                     break;
                 case 'copyToClipboard':
-                    env.clipboard.writeText(message.text);
-                    window.showInformationMessage(`Copied text '${message.text}' to the clipboard`);
+                    Clipboard.setText(message.text);
                     break;
                 case 'fix':
                     this.#fixButtonPressed$.next({ id: message.id, buttonId: message.buttonId, index: message.index });
